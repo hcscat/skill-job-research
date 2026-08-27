@@ -1,0 +1,182 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-07-09T00:00:00+09:00",
+  "purpose": "Public, reusable field catalog. Concrete search values are supplied only by the runtime profile.",
+  "privacy_rule": "No candidate-specific keywords, roles, locations, stations, career or salary limits, exclusion terms, connector targets, or raw postings.",
+  "primary_document": "docs/research/job-site-field-catalog-20260709.md",
+  "transport_reference": "docs/research/platform-data-structures-20260813.md",
+  "runtime_binding": {
+    "source_of_truth": "current authorized user profile or live configured sheet",
+    "value_policy": "Map runtime values to these field shapes immediately before collection; never add a public default.",
+    "query_path_values": ["region", "subway"]
+  },
+  "field_types": [
+    "free_text",
+    "single_select",
+    "multi_select",
+    "range",
+    "date",
+    "boolean",
+    "location",
+    "unknown"
+  ],
+  "common_field_axes": [
+    "search_keywords",
+    "role_scope",
+    "career",
+    "location",
+    "station",
+    "employment_type",
+    "work_model",
+    "education",
+    "salary",
+    "posted_or_updated",
+    "deadline",
+    "status",
+    "score"
+  ],
+  "sites": [
+    {
+      "site_key": "saramin",
+      "site_name": "Saramin",
+      "coverage": "partial",
+      "transport": ["official-api", "html"],
+      "canonical_url_pattern": "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=<id>",
+      "field_keys": ["search_keywords", "role_scope", "location", "career", "education", "employment_type", "salary", "posted_or_updated", "status"],
+      "notes": "The official API and detail page expose structured values; recheck close status on the detail."
+    },
+    {
+      "site_key": "jobkorea",
+      "site_name": "JobKorea",
+      "coverage": "partial",
+      "transport": ["html", "ssr", "rsc", "json-ld", "iframe"],
+      "canonical_url_pattern": "https://www.jobkorea.co.kr/Recruit/GI_Read/<id>",
+      "field_keys": ["search_keywords", "role_scope", "location", "station", "career", "education", "employment_type", "salary", "status"],
+      "notes": "Use the desktop detail and embedded content; refresh unstable UI parameters."
+    },
+    {
+      "site_key": "wanted",
+      "site_name": "Wanted",
+      "coverage": "partial",
+      "transport": ["html", "next-data"],
+      "canonical_url_pattern": "https://www.wanted.co.kr/wd/<id>",
+      "field_keys": ["search_keywords", "role_scope", "location", "career", "skills", "deadline", "status"],
+      "notes": "Reconcile posting-scoped status, close data, hidden flag, apply control, and rendered text."
+    },
+    {
+      "site_key": "jumpit",
+      "site_name": "Jumpit",
+      "coverage": "partial",
+      "transport": ["html", "next-data", "rsc"],
+      "canonical_url_pattern": "https://jumpit.saramin.co.kr/position/<id>",
+      "field_keys": ["search_keywords", "skills", "role_scope", "career", "location", "status"],
+      "notes": "Accessible pages can be stale; verify dates and current status."
+    },
+    {
+      "site_key": "catch",
+      "site_name": "CATCH",
+      "coverage": "partial",
+      "transport": ["html", "ssr"],
+      "canonical_url_pattern": "https://www.catch.co.kr/NCS/RecruitInfoDetails/<id>",
+      "field_keys": ["search_keywords", "role_scope", "location", "career", "education", "status"],
+      "notes": "Use the end timestamp/code and detail text for status."
+    },
+    {
+      "site_key": "groupby",
+      "site_name": "Groupby",
+      "coverage": "partial",
+      "transport": ["html", "next-data", "json-ld"],
+      "canonical_url_pattern": "https://groupby.kr/positions/<id>",
+      "field_keys": ["search_keywords", "role_scope", "career", "skills", "location", "service_model", "status"],
+      "notes": "Verify canonical details and due/status evidence; no station filter or public developer API is assumed."
+    },
+    {
+      "site_key": "work24",
+      "site_name": "Work24",
+      "coverage": "fallback",
+      "transport": ["official-api-xml", "html"],
+      "canonical_url_pattern": "site-specific",
+      "field_keys": ["search_keywords", "role_scope", "location", "career", "education", "employment_type", "salary", "status"],
+      "notes": "The XML API needs an external credential; public detail HTML is the fallback."
+    },
+    {
+      "site_key": "linkedin",
+      "site_name": "LinkedIn Jobs",
+      "coverage": "supplementary",
+      "transport": ["html", "browser-only"],
+      "canonical_url_pattern": "https://www.linkedin.com/jobs/view/<id>",
+      "field_keys": ["search_keywords", "location", "career", "employment_type", "posted_or_updated"],
+      "notes": "Use public evidence or an explicitly authorized browser session."
+    },
+    {
+      "site_key": "indeed",
+      "site_name": "Indeed",
+      "coverage": "supplementary",
+      "transport": ["html", "browser-only"],
+      "canonical_url_pattern": "https://<locale>.indeed.com/viewjob?jk=<id>",
+      "field_keys": ["search_keywords", "location", "salary", "employment_type", "posted_or_updated"],
+      "notes": "Locale-specific filters require run-time verification."
+    },
+    {
+      "site_key": "programmers",
+      "site_name": "Programmers Career",
+      "coverage": "manual-only",
+      "transport": ["html", "manual-import"],
+      "canonical_url_pattern": "unknown",
+      "field_keys": ["search_keywords", "role_scope", "skills"],
+      "notes": "Verify the current URL and filter contract before automation."
+    },
+    {
+      "site_key": "incruit",
+      "site_name": "Incruit",
+      "coverage": "manual-only",
+      "transport": ["html", "manual-import"],
+      "canonical_url_pattern": "unknown",
+      "field_keys": ["search_keywords", "location", "career"],
+      "notes": "Use only after public fields and detail status are confirmed."
+    },
+    {
+      "site_key": "rocketpunch",
+      "site_name": "RocketPunch",
+      "coverage": "manual-only",
+      "transport": ["html", "manual-import"],
+      "canonical_url_pattern": "unknown",
+      "field_keys": ["search_keywords", "role_scope", "skills", "career"],
+      "notes": "Inspect detail evidence because startup and networking contexts vary."
+    },
+    {
+      "site_key": "remember",
+      "site_name": "Remember",
+      "coverage": "login-sensitive",
+      "transport": ["browser-only", "manual-import"],
+      "canonical_url_pattern": "unknown",
+      "field_keys": ["search_keywords", "role_scope", "location", "career", "employment_type"],
+      "notes": "Use only an explicitly authorized user-controlled session."
+    },
+    {
+      "site_key": "careerly",
+      "site_name": "Careerly",
+      "coverage": "manual-only",
+      "transport": ["html", "manual-import"],
+      "canonical_url_pattern": "unknown",
+      "field_keys": ["search_keywords", "role_scope", "location", "career"],
+      "notes": "Recheck public search and detail coverage before use."
+    },
+    {
+      "site_key": "company_ats",
+      "site_name": "Company career page or ATS",
+      "coverage": "site-specific",
+      "transport": ["html", "json-ld", "xml"],
+      "canonical_url_pattern": "site-specific",
+      "field_keys": ["search_keywords", "role_scope", "location", "career", "employment_type", "deadline", "status"],
+      "notes": "Prefer a stable canonical detail URL with complete evidence."
+    }
+  ],
+  "normalization": {
+    "primary_key": ["source", "posting_id"],
+    "fallback_key": "canonical_url",
+    "preserve_platform_distinction": true,
+    "status_values": ["active", "closed", "unknown"],
+    "evidence_fields": ["transport_evidence", "last_verified_at"]
+  }
+}

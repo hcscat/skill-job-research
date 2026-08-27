@@ -1,0 +1,305 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-07-09T00:00:00+09:00",
+  "purpose": "Reusable public field and transport catalog; runtime search values are never bundled.",
+  "coverage_rule": "Record only observable public APIs, feeds, HTML, SSR/Next.js, RSC, JSON-LD, and XML. Mark login-only, undocumented, or dynamically decoded fields as partial.",
+  "last_transport_review": "2026-08-13",
+  "transport_reference": "docs/research/platform-data-structures-20260813.md",
+  "profile_binding": {
+    "source_of_truth": "current authorized user profile or live configured sheet",
+    "runtime_only_fields": [
+      "search_keywords",
+      "role_scope",
+      "role_priority",
+      "career_constraints",
+      "preferred_locations",
+      "station_filters",
+      "employment_constraints",
+      "salary_constraints",
+      "freshness_policy",
+      "exclusion_terms",
+      "score_policy",
+      "connector_targets"
+    ],
+    "public_catalog_rule": "Do not place candidate-specific values, defaults, examples, connector targets, or raw postings in this file.",
+    "location_query_paths": ["region", "subway"]
+  },
+  "field_types": [
+    "free_text",
+    "single_select",
+    "multi_select",
+    "range",
+    "date",
+    "boolean",
+    "location",
+    "unknown"
+  ],
+  "sites": [
+    {
+      "site_key": "saramin",
+      "site_name": "Saramin",
+      "priority": "recommended",
+      "coverage": "partial",
+      "transport": ["official-api", "html"],
+      "canonical_url_pattern": "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=<id>",
+      "source_evidence": [
+        "https://oapi.saramin.co.kr/guide/job-search",
+        "https://www.saramin.co.kr/zf_user/jobs/list/job-category"
+      ],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "keywords", "required": false},
+        {"key": "role_scope", "label": "Job category", "type": "multi_select", "query_parameter": "job_cd", "required": false},
+        {"key": "location", "label": "Location", "type": "location", "query_parameter": "loc_cd", "required": false},
+        {"key": "career", "label": "Career", "type": "range", "query_parameter": "career", "required": false},
+        {"key": "education", "label": "Education", "type": "multi_select", "query_parameter": "edu_lv", "required": false},
+        {"key": "employment_type", "label": "Employment type", "type": "multi_select", "query_parameter": "job_type", "required": false},
+        {"key": "salary", "label": "Compensation", "type": "range", "query_parameter": "salary", "required": false},
+        {"key": "posted_or_updated", "label": "Posted/updated", "type": "date", "query_parameter": "published|updated", "required": false},
+        {"key": "status", "label": "Active status", "type": "boolean", "source_field": "active", "required": false}
+      ],
+      "collection_notes": "Run requested region and subway paths separately; inspect the detail page and do not use the direct-hire option unless the runtime profile explicitly requires it."
+    },
+    {
+      "site_key": "jobkorea",
+      "site_name": "JobKorea",
+      "priority": "recommended",
+      "coverage": "partial",
+      "transport": ["html", "ssr", "rsc", "json-ld", "iframe"],
+      "canonical_url_pattern": "https://www.jobkorea.co.kr/Recruit/GI_Read/<id>",
+      "source_evidence": ["https://www.jobkorea.co.kr/Recruit/GI_Read/<id>"],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "runtime-ui", "required": false},
+        {"key": "role_scope", "label": "Role/category", "type": "multi_select", "query_parameter": "runtime-ui", "required": false},
+        {"key": "location", "label": "Region or station", "type": "location", "query_parameter": "runtime-ui", "required": false},
+        {"key": "career", "label": "Career", "type": "range", "source_field": "careers[]", "required": false},
+        {"key": "education", "label": "Education", "type": "multi_select", "source_field": "educationRequirements", "required": false},
+        {"key": "employment_type", "label": "Employment type", "type": "multi_select", "query_parameter": "runtime-ui", "required": false},
+        {"key": "status", "label": "Active status", "type": "unknown", "source_field": "detail-and-apply-control", "required": false}
+      ],
+      "collection_notes": "Prefer the desktop detail URL. Inspect embedded detail content and refresh unstable UI parameters at run time."
+    },
+    {
+      "site_key": "wanted",
+      "site_name": "Wanted",
+      "priority": "recommended",
+      "coverage": "partial",
+      "transport": ["html", "next-data"],
+      "canonical_url_pattern": "https://www.wanted.co.kr/wd/<id>",
+      "source_evidence": ["https://www.wanted.co.kr/wd/<id>"],
+      "fields": [
+        {"key": "search_keywords", "label": "Query", "type": "free_text", "query_parameter": "query", "required": false},
+        {"key": "role_scope", "label": "Role", "type": "multi_select", "query_parameter": "job_sort", "required": false},
+        {"key": "location", "label": "Location", "type": "multi_select", "query_parameter": "locations", "required": false},
+        {"key": "career", "label": "Career", "type": "range", "query_parameter": "years", "required": false},
+        {"key": "skills", "label": "Skill stack", "type": "multi_select", "query_parameter": "runtime-ui", "required": false},
+        {"key": "status", "label": "Posting status", "type": "unknown", "source_field": "initialData.status", "required": false},
+        {"key": "deadline", "label": "Deadline", "type": "date", "source_field": "initialData.due|close", "required": false}
+      ],
+      "collection_notes": "Reconcile posting-scoped status, close data, hidden flags, apply control, and rendered text; an open-ended deadline alone is insufficient."
+    },
+    {
+      "site_key": "jumpit",
+      "site_name": "Jumpit",
+      "priority": "recommended",
+      "coverage": "partial",
+      "transport": ["html", "next-data", "rsc"],
+      "canonical_url_pattern": "https://jumpit.saramin.co.kr/position/<id>",
+      "source_evidence": ["https://jumpit.saramin.co.kr/position/<id>"],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "runtime-ui", "required": false},
+        {"key": "skills", "label": "Tech stack", "type": "multi_select", "source_field": "techStacks", "required": false},
+        {"key": "role_scope", "label": "Role/category", "type": "multi_select", "source_field": "jobCategories", "required": false},
+        {"key": "career", "label": "Career", "type": "range", "source_field": "minCareer|maxCareer", "required": false},
+        {"key": "location", "label": "Location", "type": "location", "source_field": "location", "required": false},
+        {"key": "status", "label": "Posting status", "type": "unknown", "source_field": "positionStatus|closedAt", "required": false}
+      ],
+      "collection_notes": "Verify dates, current status, and detail text because publicly accessible pages can be stale."
+    },
+    {
+      "site_key": "catch",
+      "site_name": "CATCH",
+      "priority": "recommended",
+      "coverage": "partial",
+      "transport": ["html", "ssr"],
+      "canonical_url_pattern": "https://www.catch.co.kr/NCS/RecruitInfoDetails/<id>",
+      "source_evidence": ["https://www.catch.co.kr/NCS/RecruitInfoDetails/<id>"],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "runtime-ui", "required": false},
+        {"key": "role_scope", "label": "Category", "type": "multi_select", "query_parameter": "runtime-ui", "required": false},
+        {"key": "location", "label": "Work area", "type": "location", "source_field": "workAreas", "required": false},
+        {"key": "career", "label": "Career", "type": "multi_select", "source_field": "careerGubun", "required": false},
+        {"key": "status", "label": "Posting status", "type": "unknown", "source_field": "ApplyEndDatetime|ApplyEndCode", "required": false}
+      ],
+      "collection_notes": "Use end timestamp/code and detail text to decide status; list categories are not sufficient evidence."
+    },
+    {
+      "site_key": "groupby",
+      "site_name": "Groupby",
+      "priority": "recommended",
+      "coverage": "partial",
+      "transport": ["html", "next-data", "json-ld"],
+      "canonical_url_pattern": "https://groupby.kr/positions/<id>",
+      "source_evidence": ["https://groupby.kr/jobs/engineering", "https://groupby.kr/positions/<id>"],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "runtime-ui", "required": false},
+        {"key": "role_scope", "label": "Position", "type": "multi_select", "source_field": "positionTypes", "required": false},
+        {"key": "career", "label": "Career type/range", "type": "range", "source_field": "careerType|experienceRange", "required": false},
+        {"key": "skills", "label": "Skills", "type": "multi_select", "source_field": "techStacks", "required": false},
+        {"key": "location", "label": "Location", "type": "location", "source_field": "location|address", "required": false},
+        {"key": "service_model", "label": "Service/business model", "type": "multi_select", "query_parameter": "runtime-ui", "required": false},
+        {"key": "status", "label": "Due/status", "type": "unknown", "source_field": "dueDate|detail-status", "required": false}
+      ],
+      "collection_notes": "Verify public /positions/<id> details and due/status evidence. Do not invent a station path or undocumented API."
+    },
+    {
+      "site_key": "work24",
+      "site_name": "Work24",
+      "priority": "fallback",
+      "coverage": "partial",
+      "transport": ["official-api-xml", "html"],
+      "canonical_url_pattern": "https://www.work24.go.kr/<detail>",
+      "source_evidence": ["https://www.work24.go.kr/cm/e/a/0110/selectOpenApiIntro.do"],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "keyword", "required": false},
+        {"key": "role_scope", "label": "Occupation", "type": "multi_select", "query_parameter": "occupation", "required": false},
+        {"key": "location", "label": "Region", "type": "location", "query_parameter": "region", "required": false},
+        {"key": "career", "label": "Career", "type": "range", "query_parameter": "career", "required": false},
+        {"key": "status", "label": "Posting status", "type": "unknown", "source_field": "detail-status", "required": false}
+      ],
+      "collection_notes": "The list/detail XML API needs an external credential; public detail HTML remains the credential-free fallback."
+    },
+    {
+      "site_key": "linkedin",
+      "site_name": "LinkedIn Jobs",
+      "priority": "supplementary",
+      "coverage": "partial",
+      "transport": ["html", "browser-only"],
+      "canonical_url_pattern": "https://www.linkedin.com/jobs/view/<id>",
+      "source_evidence": ["https://www.linkedin.com/jobs/"],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "keywords", "required": false},
+        {"key": "location", "label": "Location", "type": "location", "query_parameter": "location", "required": false},
+        {"key": "career", "label": "Seniority", "type": "multi_select", "query_parameter": "f_E", "required": false},
+        {"key": "employment_type", "label": "Employment type", "type": "multi_select", "query_parameter": "f_JT", "required": false},
+        {"key": "posted_or_updated", "label": "Posted date", "type": "date", "query_parameter": "f_TPR", "required": false}
+      ],
+      "collection_notes": "Use public evidence or an explicitly authorized user-controlled session; do not retain login-only page bodies."
+    },
+    {
+      "site_key": "indeed",
+      "site_name": "Indeed",
+      "priority": "supplementary",
+      "coverage": "partial",
+      "transport": ["html", "browser-only"],
+      "canonical_url_pattern": "https://<locale>.indeed.com/viewjob?jk=<id>",
+      "source_evidence": ["https://www.indeed.com/"],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "q", "required": false},
+        {"key": "location", "label": "Location", "type": "location", "query_parameter": "l", "required": false},
+        {"key": "salary", "label": "Compensation", "type": "range", "query_parameter": "salary", "required": false},
+        {"key": "employment_type", "label": "Job type", "type": "multi_select", "query_parameter": "jt", "required": false},
+        {"key": "posted_or_updated", "label": "Posted date", "type": "date", "query_parameter": "fromage", "required": false}
+      ],
+      "collection_notes": "Locale-specific fields and terms require run-time verification."
+    },
+    {
+      "site_key": "programmers",
+      "site_name": "Programmers Career",
+      "priority": "manual-only",
+      "coverage": "unknown",
+      "transport": ["html", "manual-import"],
+      "canonical_url_pattern": "unknown",
+      "source_evidence": [],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "runtime-ui", "required": false},
+        {"key": "role_scope", "label": "Role", "type": "multi_select", "query_parameter": "runtime-ui", "required": false},
+        {"key": "skills", "label": "Skill stack", "type": "multi_select", "query_parameter": "runtime-ui", "required": false}
+      ],
+      "collection_notes": "Verify current public URL and filter contract before automating."
+    },
+    {
+      "site_key": "incruit",
+      "site_name": "Incruit",
+      "priority": "manual-only",
+      "coverage": "unknown",
+      "transport": ["html", "manual-import"],
+      "canonical_url_pattern": "unknown",
+      "source_evidence": [],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "runtime-ui", "required": false},
+        {"key": "location", "label": "Location", "type": "location", "query_parameter": "runtime-ui", "required": false},
+        {"key": "career", "label": "Career", "type": "range", "query_parameter": "runtime-ui", "required": false}
+      ],
+      "collection_notes": "Keep as a manual or deferred source until fields and detail status are verified."
+    },
+    {
+      "site_key": "rocketpunch",
+      "site_name": "RocketPunch",
+      "priority": "manual-only",
+      "coverage": "unknown",
+      "transport": ["html", "manual-import"],
+      "canonical_url_pattern": "unknown",
+      "source_evidence": [],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "runtime-ui", "required": false},
+        {"key": "role_scope", "label": "Role", "type": "multi_select", "query_parameter": "runtime-ui", "required": false},
+        {"key": "skills", "label": "Skills", "type": "multi_select", "query_parameter": "runtime-ui", "required": false}
+      ],
+      "collection_notes": "Startup and networking context can change the meaning of employment fields; inspect detail evidence."
+    },
+    {
+      "site_key": "remember",
+      "site_name": "Remember",
+      "priority": "manual-only",
+      "coverage": "login-sensitive",
+      "transport": ["browser-only", "manual-import"],
+      "canonical_url_pattern": "unknown",
+      "source_evidence": [],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword/JD", "type": "free_text", "query_parameter": "runtime-ui", "required": false},
+        {"key": "role_scope", "label": "Role", "type": "multi_select", "query_parameter": "runtime-ui", "required": false},
+        {"key": "location", "label": "Location", "type": "location", "query_parameter": "runtime-ui", "required": false}
+      ],
+      "collection_notes": "Use only an explicitly authorized user-controlled session; never export authenticated content."
+    },
+    {
+      "site_key": "careerly",
+      "site_name": "Careerly",
+      "priority": "manual-only",
+      "coverage": "unknown",
+      "transport": ["html", "manual-import"],
+      "canonical_url_pattern": "unknown",
+      "source_evidence": [],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "runtime-ui", "required": false},
+        {"key": "role_scope", "label": "Role", "type": "multi_select", "query_parameter": "runtime-ui", "required": false},
+        {"key": "location", "label": "Location", "type": "location", "query_parameter": "runtime-ui", "required": false}
+      ],
+      "collection_notes": "Recheck public search and detail coverage before use."
+    },
+    {
+      "site_key": "company_ats",
+      "site_name": "Company career page or ATS",
+      "priority": "recommended",
+      "coverage": "site-specific",
+      "transport": ["html", "json-ld", "xml"],
+      "canonical_url_pattern": "site-specific",
+      "source_evidence": [],
+      "fields": [
+        {"key": "search_keywords", "label": "Keyword", "type": "free_text", "query_parameter": "site-specific", "required": false},
+        {"key": "role_scope", "label": "Role", "type": "unknown", "source_field": "site-specific", "required": false},
+        {"key": "location", "label": "Location", "type": "location", "source_field": "site-specific", "required": false},
+        {"key": "career", "label": "Career", "type": "range", "source_field": "site-specific", "required": false},
+        {"key": "status", "label": "Posting status", "type": "unknown", "source_field": "site-specific", "required": false}
+      ],
+      "collection_notes": "Prefer a stable canonical detail URL with complete duties, requirements, dates, and status evidence."
+    }
+  ],
+  "normalization": {
+    "primary_key": ["source", "posting_id"],
+    "fallback_key": "canonical_url",
+    "preserve_platform_distinction": true,
+    "status_values": ["active", "closed", "unknown"],
+    "evidence_fields": ["transport_evidence", "last_verified_at"]
+  }
+}

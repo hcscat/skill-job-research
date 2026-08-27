@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job Research Match"
+  short_description: "Collect, match, and track active job postings"
+  default_prompt: "Use $job-research-match to collect and rank active postings, then reconcile confirmed applications in my named spreadsheet when requested."

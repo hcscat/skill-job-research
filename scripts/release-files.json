@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "package_name": "job-research-match-skill",
+  "files": [
+    ".gitignore",
+    "README.md",
+    "SECURITY.md",
+    "pyproject.toml",
+    "docs/automation-guide.md",
+    "docs/automation-guide.ko.md",
+    "docs/development-plan.md",
+    "docs/development-plan.ko.md",
+    "docs/manual-review-checklist.md",
+    "docs/manual-review-checklist.ko.md",
+    "docs/matching-policy.md",
+    "docs/matching-policy.ko.md",
+    "docs/security-and-local-state.md",
+    "docs/security-and-local-state.ko.md",
+    "docs/research/platform-data-structures-20260813.md",
+    "docs/research/platform-data-structures-20260813.ko.md",
+    "docs/research/job-site-field-catalog-20260709.json",
+    "docs/research/job-site-field-catalog-20260709.md",
+    "docs/research/job-site-field-catalog-20260709.ko.md",
+    "config/job-search-settings.example.yaml",
+    "scripts/build_release.py",
+    "scripts/install_skill.ps1",
+    "scripts/install_skill.sh",
+    "scripts/privacy_check.py",
+    "scripts/release-files.json"
+  ],
+  "trees": [
+    "skills/job-research-match",
+    "tests"
+  ]
+}

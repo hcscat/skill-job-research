@@ -1,0 +1,67 @@
+schema_version: 1
+purpose: "Shareable, credential-free job-search policy template"
+notes:
+  - "Copy this file to private local state or ignored workspace/job-collection/profile.local.yaml before adding user values."
+  - "Never add personal identifiers, connector targets, credentials, or real user preferences to this example."
+
+profile:
+  target_roles: []
+  role_scope:
+    title_matching: detail-first
+    include_adjacent_roles: false
+  role_priority:
+    primary: []
+    secondary: []
+  strong_skills: []
+  support_skills: []
+  target_industries: []
+  career_years:
+    total: null
+    discipline_specific: {}
+  preferred_locations: []
+  preferred_work_models: []
+  allowed_employment_types: []
+  employment_type_policy: user-specified
+  minimum_salary: null
+  salary_currency: null
+  salary_not_disclosed_allowed: null
+  freshness_required: null
+  excluded_keywords: []
+  hard_constraints: []
+  storage_minimum_score: null
+  recommendation_minimum_score: null
+
+collection:
+  requested_sources: []
+  location_query_paths: []
+  requested_result_limit: null
+  active_status_policy: verify-detail
+
+source_profiles:
+  groupby:
+    enabled: null
+    position_categories: []
+    career_types: []
+    experience_years: {min: null, max: null}
+    tech_stacks: []
+    locations: []
+    service_business_models: []
+    canonical_url_pattern: "https://groupby.kr/positions/<id>"
+    subway_query_supported: false
+
+deduplication:
+  primary: [source, posting_id]
+  fallback: canonical_url
+  cross_platform_same_company_role: preserve
+
+evidence:
+  required_detail_fields:
+    [company, title, responsibilities, requirements, career, education, location,
+     employment_type, posted_or_updated_at, deadline, active_status]
+  missing_value: unknown
+  retained_transport_labels: [official-api, html, SSR/Next.js, RSC, JSON-LD, XML, mixed]
+  never_retain: [cookies, authorization_headers, external_app_keys, contact_fields, authenticated_page_bodies]
+
+connectors:
+  # Store real spreadsheet, folder, and mail scopes only in private local targets.json.
+  target_reference: private-local-state
