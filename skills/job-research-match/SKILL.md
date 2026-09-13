@@ -24,16 +24,17 @@ description: Collect, verify, rank, track, and spreadsheet-deliver active job po
    - Use an existing user-controlled browser session when authenticated collection is allowed.
    - Never ask the user to paste passwords, cookies, OAuth tokens, authorization headers, or browser storage-state JSON into chat or repository files.
    - Read `references/local-state-security.md` before configuring login or local persistence.
-7. Collect every candidate returned by each selected source by default. Resolve the source's total count and page, cursor, or feed boundaries, traverse all available result pages, and verify every candidate before normalizing it with `references/collection-policy.md`. A per-run cap is allowed only when the user explicitly requests one; never introduce an implicit sample limit. Retain a desktop canonical direct URL where available. For Wanted, resolve the posting-scoped `__NEXT_DATA__.initialData.status` with `scripts/wanted_status.py`; never treat `마감일=상시채용` as proof of activity. If a source cannot be enumerated completely, report the exact boundary and mark coverage partial.
-8. Score and rank postings with `references/matching-policy.md` and `scripts/score_matches.py`. Explain both evidence and uncertainty; do not recommend an unverified or closed posting.
-9. When the user requests a spreadsheet deliverable, read `references/spreadsheet-output.md`, inspect the current sheet before writing, and verify the written ranges afterward.
-10. When the user explicitly requests application-completion reconciliation, Gmail label handling, or an applied-postings sheet, read `references/application-tracking.md` and use the available Gmail and Google Drive/Sheets skills or connectors. Gmail searches for this workflow must include `is:unread`, so read messages are excluded from the search and inspection scope unless the user explicitly requests an exception. Do not alter mail read state, labels, sharing, or Drive permissions unless the user explicitly asks.
-11. Read local feedback memory only as a secondary preference signal. Explicit profile constraints and current user instructions always override learned signals. Read `references/feedback-memory.md`.
-12. Save only redacted run summaries and explicitly authorized feedback in the private local state directory through `scripts/local_state.py`.
+7. Before every collection run, reconcile the live collection sheet using `references/spreadsheet-output.md`. Read `지원여부` and optional legacy `확인` by header name; do not recreate removed columns. Preserve confirmed applications, closed labels, and annotated `미지원-...` values under the documented precedence. Map each destination's live schema, read back the destination before source deletion, and preserve blank or unknown statuses. For authorized status-column migration, use `scripts/status_columns.py` and verify every affected row before removing a column.
+8. Collect every candidate returned by each selected source by default. Resolve the source's total count and page, cursor, or feed boundaries, traverse all available result pages, and verify every candidate before normalizing it with `references/collection-policy.md`. A per-run cap is allowed only when the user explicitly requests one; never introduce an implicit sample limit. Retain a desktop canonical direct URL where available. For Wanted, resolve the posting-scoped `__NEXT_DATA__.initialData.status` with `scripts/wanted_status.py`; never treat `마감일=상시채용` as proof of activity. If a source cannot be enumerated completely, report the exact boundary and mark coverage partial.
+9. Score and rank postings with `references/matching-policy.md` and `scripts/score_matches.py`. Explain both evidence and uncertainty; do not recommend an unverified or closed posting.
+10. When the user requests a spreadsheet deliverable, read `references/spreadsheet-output.md`, inspect the current sheet before writing, and verify the written ranges afterward.
+11. When the user explicitly requests application-completion reconciliation, Gmail label handling, or an applied-postings sheet, read `references/application-tracking.md` and use the available Gmail and Google Drive/Sheets skills or connectors. Gmail searches for this workflow must include `is:unread`, so read messages are excluded from the search and inspection scope unless the user explicitly requests an exception. Do not alter mail read state, labels, sharing, or Drive permissions unless the user explicitly asks.
+12. Read local feedback memory only as a secondary preference signal. Explicit profile constraints and current user instructions always override learned signals. Read `references/feedback-memory.md`.
+13. Save only redacted run summaries and explicitly authorized feedback in the private local state directory through `scripts/local_state.py`.
    - If a repository-local execution area is required, use the explicitly ignored `workspace/job-collection/` directory (for example, `profile.local.*`, `targets.local.*`, and redacted `runs/`). Never add that directory to a release or commit its contents.
    - Keep portable references, examples, tests, and release manifests free of the current user's query terms, location lists, station lists, thresholds, exclusions, and raw postings.
-13. Do not submit applications, upload candidate documents, or message recruiters.
-14. For recurring searches, read `references/scheduling.md`. Test the same query on demand before creating an automation.
+14. Do not submit applications, upload candidate documents, or message recruiters.
+15. For recurring searches, read `references/scheduling.md`. Test the same query on demand before creating an automation.
 
 ## Input Rules
 
@@ -74,6 +75,10 @@ Always include:
 - missing evidence and whether coverage is complete, partial, or best-effort
 - local files updated, without exposing the user's home path or personal data
 - confirmation that no application or recruiter message was sent
+
+When status reconciliation runs before collection, also report the number moved to
+each destination tab, any rows left because their status was blank or unrecognized,
+and the destination readback result.
 
 When Gmail or a spreadsheet was explicitly requested, also include the checked scope, reconciliation rule, affected row count, and whether mail state changed. Never include message bodies, account identifiers, absolute local paths, or credential details.
 

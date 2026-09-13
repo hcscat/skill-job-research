@@ -27,7 +27,7 @@ ALLOWED_EMAIL_DOMAINS = {"example.com", "users.noreply.github.com"}
 ALLOWED_COMMIT_NAMES = {"release bot", "github", "github actions", "dependabot[bot]"}
 GITHUB_HANDLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,38}$")
 SENSITIVE_NAME_PARTS = ("resume", "curriculum-vitae", "이력서", "경력기술서", "storage-state", "credentials")
-HISTORY_PRIVATE_NAMES = {"AGENTS.md", "AGENTS.local.md"}
+HISTORY_PRIVATE_NAMES = {"AGENTS.md", "AGENTS.override.md", "AGENTS.local.md"}
 HISTORY_PRIVATE_PARTS = (".local.", ".private.", "connector-targets", "storage-state", "credentials")
 
 

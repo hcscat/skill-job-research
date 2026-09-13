@@ -6,6 +6,23 @@ The repository contains only reusable skill logic, generic examples, tests, and 
 
 The skill stores user state outside the repository. Set `JOB_RESEARCH_MATCH_HOME` when a different private location is required. Keep the state directory owner-only and back it up only to an encrypted destination.
 
+## Local instructions and cross-device privacy
+
+Keep AGENTS.md and AGENTS.override.md local, including nested copies. Shared
+project ignore rules must contain both names without slashes so clones inherit
+the protection. Git ignore rules do not protect already tracked files; inspect
+staged files, outgoing commits, and actual package contents before publication.
+General permission to commit, push, or publish does not authorize these files.
+Any exception requires explicit permission for the named file and exact action.
+Preserve local contents and report tracked-file conflicts; do not automatically
+delete files or rewrite history.
+
+Share reusable logic and sanitized templates, not filled-in settings, private
+prompts, credentials, workspace mappings, logs, databases, backups, or run reports.
+On another device, merge the sanitized policy into the tool's supported global
+instruction file. A clone does not transfer global AI instructions, and another
+device must not be described as configured without verification.
+
 ## Authentication
 
 - Prefer a user-controlled browser profile or an operating system credential store.

@@ -54,6 +54,8 @@ portfolio_profile_base_*.md
 
 # Local agent instructions; never publish from this repository.
 /AGENTS.md
+AGENTS.md
+AGENTS.override.md
 /AGENTS.local.md
 /.codex/
 /.claude/

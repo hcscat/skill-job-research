@@ -33,6 +33,14 @@ Use this reference only when the user explicitly requests Gmail inspection, appl
 - Preserve the existing score scale. If a sheet uses a ten-point score, derive it deterministically from the internal 0-100 score and document the conversion in the sheet's criteria area.
 - Write in bounded batches, then read back headers and representative rows. Verify row count, direct URLs, status values, duplicate keys, and any requested formatting.
 
+### Collection-sheet status queue
+
+Before source searches, follow the authoritative pre-collection status queue and
+migration procedure in `references/spreadsheet-output.md`. Resolve `지원여부`
+and optional legacy `확인` from live headers. Never recreate a removed column or
+assume an applied-postings tab has the collection schema. Preserve application
+confirmation over a closed label and retain ambiguous compound values for review.
+
 ## Reporting
 
 Report only aggregate or job-record outcomes: scope searched, confirmed application count, ambiguous matches needing review, updated sheet names, changed mail-state count, and skipped items. Do not expose email addresses, message bodies, local file paths, tokens, or account configuration.

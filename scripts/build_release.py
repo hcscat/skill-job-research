@@ -16,7 +16,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "scripts" / "release-files.json"
-EXCLUDED_NAMES = {".DS_Store"}
+EXCLUDED_NAMES = {".DS_Store", "AGENTS.md", "AGENTS.override.md", "AGENTS.local.md"}
 EXCLUDED_PARTS = {".git", ".venv", "__pycache__", "data", "dist", "output", "reports", "tmp"}
 
 
@@ -44,6 +44,8 @@ def allowed_files(config: dict[str, object]) -> list[Path]:
     selected: set[Path] = set()
     for relative in config.get("files", []):
         path = ROOT / str(relative)
+        if path.name in EXCLUDED_NAMES:
+            raise ValueError("Local instruction files must not be explicitly packaged")
         if not path.is_file():
             raise FileNotFoundError(f"release file is missing: {relative}")
         selected.add(path)

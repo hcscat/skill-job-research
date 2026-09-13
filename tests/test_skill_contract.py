@@ -36,6 +36,8 @@ class SkillContractTest(unittest.TestCase):
             self.assertIn(f"references/{reference}", text)
         self.assertTrue((SKILL / "scripts" / "wanted_status.py").exists())
         self.assertIn("scripts/wanted_status.py", text)
+        self.assertTrue((SKILL / "scripts" / "status_columns.py").exists())
+        self.assertIn("scripts/status_columns.py", text)
 
     def test_removed_architectures_are_absent(self) -> None:
         self.assertFalse((ROOT / "src" / "job_research_mcp").exists())
@@ -107,6 +109,20 @@ class SkillContractTest(unittest.TestCase):
         self.assertIn("enumerate every result page, cursor, feed segment, or api window", runner_text)
         self.assertIn("listed_count", runner_text)
         self.assertNotIn("prefer 10 to 30 high-quality postings", collection_text)
+
+    def test_collection_reconciles_manual_status_queue_before_search(self) -> None:
+        skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8").casefold()
+        spreadsheet_text = (SKILL / "references" / "spreadsheet-output.md").read_text(
+            encoding="utf-8"
+        ).casefold()
+
+        self.assertIn("before every collection run", skill_text)
+        self.assertIn("지원여부", skill_text)
+        self.assertIn("미지원-...", skill_text)
+        self.assertIn("read back the destination", skill_text)
+        self.assertIn("pre-collection status reconciliation", spreadsheet_text)
+        self.assertIn("마감공고", spreadsheet_text)
+        self.assertIn("re-number", spreadsheet_text)
 
     def test_privacy_gate_passes(self) -> None:
         result = subprocess.run(

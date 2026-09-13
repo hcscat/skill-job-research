@@ -11,6 +11,63 @@ Use this reference only when the user asks to write job-search results to a spre
 5. Treat write access as scoped to the requested spreadsheet and task. Do not broaden Drive permissions or share the file.
 6. Read `references/application-tracking.md` before reconciling Gmail completion evidence or creating an applied-postings sheet.
 
+## Pre-collection status reconciliation
+
+Before collecting new postings, inspect the collection sheet's `지원여부` and
+optional legacy `확인` columns and the destination-tab schemas. Resolve columns
+by live header name, never a fixed letter or offset. Do not recreate removed
+columns. Treat these manual values as an
+explicit queue:
+
+1. If `지원여부` confirms an application (for example `지원완료`), move the row to
+   `지원공고`.
+2. Otherwise, if either status column is `마감`, move it to `마감공고`.
+3. Otherwise, if either status column is `미지원` or an annotated form such as
+   `미지원-맞지않음`, move it to `미지원공고`.
+4. A standalone `지원` in either available status column also moves to `지원공고`.
+
+Application confirmation takes precedence over a later closed label when both
+appear on the same row. Blank or unrecognized values remain in `채용공고` and are
+reported for manual review. Map each destination's actual headers rather than
+assuming a fixed column count or a particular destination layout. A tracking tab
+may have neither status column nor a posting ID; do not invent those fields.
+Deduplicate destination writes by source plus posting ID, falling back
+to a canonical URL. Read back appended rows before deleting the successfully
+transferred source rows; then re-number the remaining collection rows without
+overwriting user-authored fields.
+
+## Status column migration and interrupted runs
+
+For an authorized merge/removal, read every occupied row, including filtered or
+hidden rows, and retain the original values in task memory. Do not choose an
+arbitrary end row such as 500. Use `scripts/status_columns.py` to build the pure
+in-memory merge plan; it performs no connector writes. Duplicate headers and
+formula-bearing status cells require review before mutation.
+
+- Empty target: copy the legacy value. Empty legacy value: keep the target.
+- Equal values: retain one. Different values: preserve both with an explicit
+  legacy label; report conflicts instead of guessing which value is correct.
+- Write only changed target cells as literal strings. Read back every changed
+  cell and compare with the plan. Immediately before deletion, re-read the
+  original source and target ranges to detect concurrent edits.
+- Only after successful comparison, remove the requested legacy column. Clearing
+  its cells is not column removal. If either header is absent, report that case;
+  never overwrite another column or create a new tracking schema implicitly.
+- Re-read headers and all affected data after deletion; compare row count,
+  stable keys, formulas, and unaffected values using the shifted header mapping.
+  A saved indicator or a first-row screenshot alone does not prove correctness.
+- Prefer local in-memory transformations to temporary spreadsheet formulas.
+  If a helper range is necessary, prove it is empty, record its exact extent,
+  paste results as values, verify Unicode text, and remove only owned helpers.
+- On interruption, re-read the live state and resume only missing steps. Do not
+  repeat a merge from stale snapshots. Report verified, pending, and unverified
+  work separately; do not declare completion while a requested column remains.
+
+Connection recovery starts with a read-only check of the exact workbook and tabs.
+Distinguish connector failure from browser-extension availability; neither proves
+the other is healthy. After repeated identical failures, switch once to an
+available supported route or report the blocker, rather than retrying blindly.
+
 ## Results Schema
 
 Use stable, human-readable columns. Include these fields when the source exposes them:

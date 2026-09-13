@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +24,8 @@ class ReleaseTest(unittest.TestCase):
         )
 
         self.assertIn("/AGENTS.md", gitignore)
+        self.assertIn("AGENTS.md", gitignore.splitlines())
+        self.assertIn("AGENTS.override.md", gitignore.splitlines())
         self.assertNotIn("AGENTS.md", release_manifest["files"])
         self.assertNotIn("AGENTS.md", release_manifest["trees"])
         self.assertIn("/config/*.local.*", gitignore)
@@ -37,6 +40,20 @@ class ReleaseTest(unittest.TestCase):
             "docs/security-and-local-state.md",
         ):
             self.assertIn(english_doc, release_manifest["files"])
+
+    def test_nested_instruction_files_are_excluded_from_packages(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            nested = root / "skills" / "example"
+            nested.mkdir(parents=True)
+            for name in ("AGENTS.md", "AGENTS.override.md", "AGENTS.local.md", "SKILL.md"):
+                (nested / name).write_text("Synthetic test content", encoding="utf-8")
+            with patch.object(build_release, "ROOT", root):
+                selected = build_release.allowed_files({"files": [], "trees": ["skills"]})
+                self.assertEqual([p.name for p in selected], ["SKILL.md"])
+                for name in ("AGENTS.md", "AGENTS.override.md"):
+                    with self.assertRaises(ValueError):
+                        build_release.allowed_files({"files": [f"skills/example/{name}"]})
 
     def test_installers_store_backups_outside_skill_discovery(self) -> None:
         shell = (ROOT / "scripts" / "install_skill.sh").read_text(encoding="utf-8")
