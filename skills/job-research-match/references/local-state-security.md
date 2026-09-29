@@ -8,6 +8,10 @@ Use concrete user data only in the active task after explicit authorization. Do 
 
 ## State Location
 
+Prefer keeping original sensitive documents outside the checkout; do not copy
+them into the structured local-state format. Use only their authorized redacted
+facts in that format.
+
 Use `JOB_RESEARCH_MATCH_HOME` when set. Otherwise use:
 
 - macOS: `~/Library/Application Support/job-research-match`
@@ -34,6 +38,44 @@ Do not store passwords, cookies, OAuth tokens, API keys, authorization headers, 
 Run `local_state.py init` during installation or first use. When the user authorizes persistence, let the agent create a redacted profile and connector-target file through the state script. Create any intermediate draft only in the private state `workspace/` directory, validate it, and avoid repository paths even when `.gitignore` would hide them.
 
 Keep real user preferences and connector targets out of public examples. Repository files named `*.example.*` must contain placeholders or synthetic values only. Use a `*.local.*` or `*.private.*` name only as a defensive fallback for a user-requested repository-local file; the preferred location remains the private state root outside Git.
+
+## Runtime Document Git Protection
+
+The shared `.gitignore` intentionally contains no speculative resume, career-
+document, CV, or portfolio filename patterns. Their absence is not permission to
+publish documents. Determine sensitivity from the authorized task and data, not
+just a filename or extension. Do not search for unrelated private documents.
+
+1. Before creating a private artifact or handling a user-supplied document in a
+   checkout, identify its actual path and owning Git root. Do not initialize a
+   repository just to add ignore rules. Keep documents outside Git by default;
+   do not move or copy existing user files without authorization.
+2. If a repository-local location is explicitly required, add or extend that
+   repository's `.gitignore` before writing or staging sensitive content. Use the
+   smallest applicable anchored path or a dedicated neutral private directory.
+   Preserve existing rules. Escape Git pattern metacharacters when matching a
+   literal filename. Do not add broad document-extension bans or a catalog of
+   hypothetical filenames to the portable source.
+3. Ignore rules are themselves publishable text. Never put a person's name,
+   original identifying document name, absolute path, or account identifier in a
+   shared `.gitignore`. Prefer a neutral private directory that matches the actual
+   workflow; if safe placement requires an unauthorized move, pause and ask.
+4. Verify the actual path with `git check-ignore -v -- <relative-path>`. Separately
+   inspect `git ls-files --error-unmatch -- <relative-path>` and the staged diff;
+   an ignore match does not remove an already tracked or staged file. For a
+   tracked path, `git check-ignore --no-index -v -- <relative-path>` can check the
+   rule independently, but it does not prove that publication is safe.
+5. If tracked, staged, or previously committed sensitive content is found, stop
+   publication and report the affected path privately without quoting contents.
+   Ask before index removal or history rewriting unless that exact operation was
+   already authorized. Do not delete the working file as a remedy.
+6. Recheck new private outputs and the selected commit/release contents before
+   sharing. Exclude originals, extracts, and backups from package manifests as
+   well as Git. `.gitignore` is neither encryption nor a release-content filter.
+
+Report which artifact categories are protected and any unresolved tracked-file
+issue. Do not claim that updating instructions automatically configured another
+repository, an installed skill, or an external device.
 
 ## Login Plan
 

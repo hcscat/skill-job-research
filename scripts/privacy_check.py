@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import re
 import subprocess
@@ -29,6 +30,15 @@ GITHUB_HANDLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,38}$")
 SENSITIVE_NAME_PARTS = ("resume", "curriculum-vitae", "이력서", "경력기술서", "storage-state", "credentials")
 HISTORY_PRIVATE_NAMES = {"AGENTS.md", "AGENTS.override.md", "AGENTS.local.md"}
 HISTORY_PRIVATE_PARTS = (".local.", ".private.", "connector-targets", "storage-state", "credentials")
+# Full-document approvals, not a filename bypass. Review before adding a digest.
+PUBLIC_AGENT_GUIDE_SHA256 = frozenset({
+    "794bcaec0cc7104ca916633bc0428e77520ab91fc021de0dd0db0bde9df940f8",
+    "916bcfac8f0a1b64c217affeacbec3fe70314f05f3a1cf6bebe77b0e14df465f",
+})
+
+
+def approved_public_guide(relative: str, content: bytes) -> bool:
+    return relative == "AGENTS.md" and hashlib.sha256(content).hexdigest() in PUBLIC_AGENT_GUIDE_SHA256
 
 
 def candidate_files(root: Path, all_files: bool = False) -> list[Path]:
@@ -76,6 +86,10 @@ def scan(root: Path, all_files: bool = False) -> list[tuple[str, int, str]]:
         lower_name = relative.casefold()
         if any(part in lower_name for part in SENSITIVE_NAME_PARTS):
             findings.append((relative, 0, "sensitive filename"))
+        if path.name in HISTORY_PRIVATE_NAMES and (
+            path.is_symlink() or not approved_public_guide(relative, path.read_bytes())
+        ):
+            findings.append((relative, 0, "unapproved instruction file"))
         content = text_content(path)
         if content is None:
             continue
@@ -130,12 +144,12 @@ def scan_git_history(root: Path) -> list[tuple[str, int, str]]:
                 continue
             name = Path(relative).name
             lower = relative.casefold()
-            if name in HISTORY_PRIVATE_NAMES or any(part in lower for part in HISTORY_PRIVATE_PARTS):
+            blob = _git(root, "show", f"{commit}:{relative}").stdout
+            if (name in HISTORY_PRIVATE_NAMES and not approved_public_guide(relative, blob)) or any(
+                part in lower for part in HISTORY_PRIVATE_PARTS
+            ):
                 findings.add((f"{commit[:12]}:{relative}", 0, "private filename in Git history"))
                 continue
-            blob = subprocess.run(
-                ["git", "show", f"{commit}:{relative}"], cwd=root, check=False, capture_output=True
-            ).stdout
             if len(blob) > 2_000_000 or b"\0" in blob:
                 continue
             content = blob.decode("utf-8", errors="replace")

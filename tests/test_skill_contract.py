@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+import tempfile
 import unittest
 
 import yaml
@@ -38,12 +39,45 @@ class SkillContractTest(unittest.TestCase):
         self.assertIn("scripts/wanted_status.py", text)
         self.assertTrue((SKILL / "scripts" / "status_columns.py").exists())
         self.assertIn("scripts/status_columns.py", text)
+        self.assertTrue((SKILL / "scripts" / "status_transfer.py").exists())
+        self.assertIn("scripts/status_transfer.py", text)
 
     def test_removed_architectures_are_absent(self) -> None:
         self.assertFalse((ROOT / "src" / "job_research_mcp").exists())
         self.assertFalse((ROOT / "apps").exists())
         self.assertFalse((ROOT / "job_harvest").exists())
         self.assertFalse((ROOT / "package.json").exists())
+
+    def test_document_protection_is_routed_from_skill_and_onboarding(self) -> None:
+        fragment = "local-state-security.md#runtime-document-git-protection"
+        self.assertIn(fragment, (SKILL / "SKILL.md").read_text(encoding="utf-8"))
+        self.assertIn(fragment, (SKILL / "references/onboarding.md").read_text(encoding="utf-8"))
+        policy = (SKILL / "references/local-state-security.md").read_text(encoding="utf-8")
+        self.assertIn("## Runtime Document Git Protection", policy)
+
+    def test_runtime_ignore_rule_and_tracked_file_are_distinct(self) -> None:
+        # Synthetic paths exercise Git semantics, not real candidate documents.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+            (root / ".gitignore").write_text(gitignore, encoding="utf-8")
+            for name in ("sample-resume.pdf", "sample-career-document.txt", "sample-CV.docx"):
+                result = subprocess.run(["git", "check-ignore", "-q", "--", name], cwd=root)
+                self.assertEqual(result.returncode, 1)
+            incoming = root / "private-inputs"
+            incoming.mkdir()
+            document = "private-inputs/sample.txt"
+            (root / document).write_text("Synthetic document", encoding="utf-8")
+            subprocess.run(["git", "add", "--", document], cwd=root, check=True)
+            (root / ".gitignore").write_text(gitignore + "\n/private-inputs/\n", encoding="utf-8")
+            result = subprocess.run(["git", "check-ignore", "--no-index", "-q", "--", document], cwd=root)
+            self.assertEqual(result.returncode, 0)
+            result = subprocess.run(["git", "ls-files", "--error-unmatch", "--", document],
+                                    cwd=root, capture_output=True)
+            self.assertEqual(result.returncode, 0)  # Still staged despite the rule.
+            result = subprocess.run(["git", "check-ignore", "-q", "--", "private-inputs/new.txt"], cwd=root)
+            self.assertEqual(result.returncode, 0)
 
     def test_skill_forbids_automatic_application(self) -> None:
         text = (SKILL / "SKILL.md").read_text(encoding="utf-8").casefold()

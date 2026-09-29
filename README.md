@@ -88,7 +88,12 @@ For a scheduled Linux run, configure the profile and query locally, test the on-
 
 ## Privacy Before Git
 
-Run `./scripts/privacy_check.py --all-files` before every commit or public release. Run `./scripts/privacy_check.py --git-history` before publishing a new or rewritten repository. Local agent instructions, user-specific settings, connector targets, resumes, career documents, profiles, login sessions, reports, run outputs, and preference history are ignored by Git and must remain outside the repository.
+Repository development guidance is in [AGENTS.md](AGENTS.md). It contains only
+reviewed, portable instructions and is the sole public instruction-file exception.
+Private workspace guides and nested overrides remain excluded; the development
+guide is not installed with the skill or included in release bundles.
+
+Run `./scripts/privacy_check.py --all-files` before every commit or public release. Run `./scripts/privacy_check.py --git-history` before publishing a new or rewritten repository. Private instructions, user-specific settings, connector targets, personal documents, profiles, login sessions, reports, run outputs, and preference history must remain outside the public source. General runtime/security artifacts are ignored by default; individual document filenames are not pre-enumerated. For an authorized repository-local document or output, the agent must add safe ignore rules for the actual location and verify that the file is not already tracked or staged. See [runtime document Git protection](skills/job-research-match/references/local-state-security.md#runtime-document-git-protection).
 
 The history audit rejects local-only filenames and non-noreply commit email metadata. For a public repository, configure a GitHub noreply address or a deliberately non-personal publishing identity before the first commit. Cleaning the current tree does not remove information already present in reachable commits.
 

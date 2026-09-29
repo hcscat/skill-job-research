@@ -25,38 +25,16 @@ playwright/.auth/
 storage-state*.json
 *.auth.json
 *.session.json
-*resume*.pdf
-*Resume*.pdf
-*CV*.pdf
-*cv*.pdf
-*이력서*.pdf
-*경력기술서*.pdf
-*이력서*
-*경력기술서*
-*resume*.docx
-*resume*.txt
-*resume*.md
-*resume*.json
-*Resume*.docx
-*Resume*.txt
-*Resume*.md
-*Resume*.json
-*CV*.docx
-*CV*.txt
-*CV*.md
-*cv*.docx
-*cv*.txt
-*cv*.md
 *.sqlite
 *.sqlite3
 *.log
-portfolio_profile_base_*.md
 
-# Local agent instructions; never publish from this repository.
+# Local instructions stay private; only the reviewed root guide is public.
 /AGENTS.md
 AGENTS.md
 AGENTS.override.md
 /AGENTS.local.md
+!/AGENTS.md
 /.codex/
 /.claude/
 

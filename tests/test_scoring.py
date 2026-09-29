@@ -205,6 +205,127 @@ class ScoringTest(unittest.TestCase):
         self.assertFalse(result["recommended"])
         self.assertTrue(result["storage_eligible"])
 
+    def test_explicit_priority_gate_does_not_depend_on_storage_score(self) -> None:
+        profile = {**self.profile, "allowed_role_priorities": [1], "storage_minimum_score": None}
+        primary = score_matches.score_match(profile, {**self.posting, "role_priority": 1})
+        secondary = score_matches.score_match(profile, {**self.posting, "role_priority": 2})
+        self.assertTrue(primary["storage_eligible"])
+        self.assertFalse(secondary["storage_eligible"])
+        self.assertTrue(any("role priority" in reason for reason in secondary["excluded_reasons"]))
+
+    def test_disabled_penalties_preserve_caps_and_exclusions(self) -> None:
+        profile = {**self.profile, "penalties_enabled": False}
+        posting = {**self.posting, "title": "sales", "active_status": "unknown"}
+        result = score_matches.score_match(profile, posting)
+        self.assertFalse(result["penalties"])
+        self.assertLessEqual(result["score"], 79)
+        self.assertTrue(result["caps"])
+        closed = score_matches.score_match(profile, {**posting, "active_status": "closed"})
+        self.assertFalse(closed["storage_eligible"])
+
+    def test_company_grouping_preserves_rows_scores_and_platforms(self) -> None:
+        def item(company, score, identifier, source="Example board"):
+            return dict(company=company, score=score, job_id=identifier, source=source,
+                        title="Example role", level="review", role_priority=1)
+        rows = [item("Example Alpha", 92, "a"), item("Example Beta", 85, "b"),
+                item("(주)Example Alpha", 60, "c", "Another board"),
+                item("", 70, "d"), item("", 20, "e")]
+        ranked = score_matches.order_matches({"ranking": {"group_by": "company"}}, rows)
+        self.assertEqual([r["job_id"] for r in ranked], ["a", "c", "b", "d", "e"])
+        self.assertEqual(len(ranked), len(rows))
+        self.assertEqual([r["score"] for r in rows], [92, 85, 60, 70, 20])
+        self.assertEqual(ranked[1]["source"], "Another board")
+        self.assertEqual([r["job_id"] for r in score_matches.order_matches({}, rows)],
+                         ["a", "b", "d", "c", "e"])
+
+    def test_role_gate_does_not_use_company_or_qualification_keywords(self) -> None:
+        profile = {"target_roles": ["engineer"], "role_priority": {"primary": ["specialist"]},
+                   "allowed_role_priorities": [1]}
+        posting = {"title": "Engineer", "company": "Specialist Company",
+                   "requirements": ["Collaborate with specialist"], "active_status": "active"}
+        self.assertFalse(score_matches.score_match(profile, posting)["storage_eligible"])
+
+    def test_required_qualification_penalties_use_only_required_snippets(self) -> None:
+        profile = {
+            "target_roles": ["engineer"],
+            "strong_skills": ["Python"],
+            "required_qualification_penalty_cap": 30,
+            "required_qualification_penalties": [
+                {"name": "specialized experience", "points": 10,
+                 "term_groups": [["distributed systems"], ["experience"]]},
+                {"name": "framework requirement", "points": 10,
+                 "term_groups": [["Framework Alpha"]]},
+                {"name": "language requirement", "points": 10,
+                 "term_groups": [["Language Beta"]]},
+            ],
+        }
+        shared = {
+            "company": "Example Co", "title": "Product Engineer",
+            "roles": ["engineer"], "skills": ["Python"],
+            "active_status": "active", "evidence_quality": "detail-text",
+        }
+        ordinary = {
+            **shared,
+            "required_qualifications": ["Python experience"],
+            "preferred_qualifications": ["Distributed systems experience; Framework Alpha; Language Beta"],
+        }
+        stricter = {
+            **shared,
+            "required_qualifications": [
+                "Distributed systems engineering experience",
+                "Framework Alpha",
+                "Language Beta",
+            ],
+        }
+
+        ordinary_result = score_matches.score_match(profile, ordinary)
+        stricter_result = score_matches.score_match(profile, stricter)
+
+        self.assertEqual(ordinary_result["score"], 100)
+        self.assertEqual(stricter_result["score"], 70)
+        self.assertEqual(len(stricter_result["penalties"]), 3)
+        self.assertEqual(ordinary_result["role_priority"], stricter_result["role_priority"])
+
+    def test_required_terms_in_separate_bullets_do_not_trigger_a_combined_rule(self) -> None:
+        profile = {
+            "strong_skills": ["Python"],
+            "required_qualification_penalties": [
+                {"name": "specialized experience", "points": 10,
+                 "term_groups": [["distributed systems"], ["experience"]]},
+            ],
+        }
+        posting = {
+            "title": "Distributed Systems Engineer", "skills": ["Python"],
+            "active_status": "active", "evidence_quality": "detail-text",
+            "required_qualifications": ["Distributed systems knowledge", "Other engineering experience"],
+        }
+
+        result = score_matches.score_match(profile, posting)
+
+        self.assertEqual(result["score"], 100)
+        self.assertFalse(result["penalties"])
+
+    def test_missing_required_section_is_not_guessed_from_full_text(self) -> None:
+        profile = {
+            "strong_skills": ["Python"],
+            "required_qualification_penalties": [
+                {"name": "specialized experience", "points": 10,
+                 "term_groups": [["distributed systems"], ["experience"]]},
+            ],
+        }
+        posting = {
+            "title": "Distributed Systems Experience Engineer",
+            "requirements": ["Distributed systems experience"],
+            "skills": ["Python"], "active_status": "active",
+            "evidence_quality": "detail-text",
+        }
+
+        result = score_matches.score_match(profile, posting)
+
+        self.assertEqual(result["score"], 100)
+        self.assertFalse(result["penalties"])
+        self.assertTrue(any("not evaluated" in caution for caution in result["cautions"]))
+
 
 if __name__ == "__main__":
     unittest.main()

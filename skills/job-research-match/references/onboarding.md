@@ -40,6 +40,11 @@ Do not require a value that the user wants to leave unknown. Do not infer a hard
 
 The AI may create and update these private files as part of installation or use after authorization. It must not create them under the repository merely because `.gitignore` would hide them.
 
+For an authorized repository-local document or output, follow
+[runtime document Git protection](local-state-security.md#runtime-document-git-protection)
+before writing. Add rules for actual paths and verify both ignore and tracking
+state; the shared source does not pre-enumerate personal document filenames.
+
 ## Safe Output
 
 Report which private artifact categories were created or updated, their logical names, validation result, and any missing decisions. Do not report absolute local paths, cloud document IDs, account identifiers, or file contents.

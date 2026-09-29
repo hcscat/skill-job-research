@@ -74,6 +74,7 @@ def _posting_text(posting: dict[str, Any]) -> str:
         "industries",
         "skills",
         "requirements",
+        "required_qualifications",
         "responsibilities",
         "decoded_skill_names",
     ):
@@ -185,6 +186,51 @@ def _preference_ratio(profile: dict[str, Any], posting: dict[str, Any]) -> tuple
     return earned / len(supplied), matches, cautions
 
 
+def _required_qualification_penalties(
+    profile: dict[str, Any], posting: dict[str, Any]
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Apply configured penalties only to separately verified required criteria."""
+    rules = profile.get("required_qualification_penalties") or []
+    if not rules:
+        return [], []
+    if "required_qualifications" not in posting:
+        return [], ["required qualification evidence is unavailable; conditional penalties were not evaluated"]
+
+    snippets = _as_strings(posting.get("required_qualifications"))
+    penalties: list[dict[str, Any]] = []
+    for rule in rules:
+        if not isinstance(rule, dict):
+            raise ValueError("required qualification penalty must be an object")
+        name = str(rule.get("name") or "").strip()
+        points = _number(rule.get("points"))
+        groups = rule.get("term_groups")
+        if not name or points is None or points <= 0 or int(points) != points:
+            raise ValueError("required qualification penalty needs a name and positive integer points")
+        if not isinstance(groups, list) or not groups or any(not _as_strings(group) for group in groups):
+            raise ValueError("required qualification penalty needs nonempty term groups")
+        # All groups must match the same required snippet. A title, responsibility,
+        # preferred criterion, or a different bullet cannot trigger the rule.
+        if any(
+            all(any(_contains(_normalize(snippet), term) for term in _as_strings(group)) for group in groups)
+            for snippet in snippets
+        ):
+            penalties.append({"reason": name, "points": int(points)})
+
+    cap = _number(profile.get("required_qualification_penalty_cap"))
+    if cap is not None:
+        if cap < 0 or int(cap) != cap:
+            raise ValueError("required qualification penalty cap must be a nonnegative integer")
+        remaining = int(cap)
+        capped: list[dict[str, Any]] = []
+        for penalty in penalties:
+            applied = min(penalty["points"], remaining)
+            if applied:
+                capped.append({**penalty, "points": applied})
+            remaining -= applied
+        penalties = capped
+    return penalties, []
+
+
 def _level(score: int, excluded: bool) -> str:
     if excluded:
         return "excluded"
@@ -284,7 +330,26 @@ def score_match(profile: dict[str, Any], posting: dict[str, Any]) -> dict[str, A
         points = min(30, len(avoid_matches) * 10)
         penalties.append({"reason": f"avoid keywords: {', '.join(avoid_matches)}", "points": points})
 
+    qualification_penalties, qualification_cautions = (
+        _required_qualification_penalties(profile, posting)
+        if profile.get("penalties_enabled") is not False else ([], [])
+    )
+    penalties.extend(qualification_penalties)
+    cautions.extend(qualification_cautions)
+
     excluded_reasons: list[str] = []
+    role_text = _posting_text({key: posting[key] for key in (
+        "title", "roles", "role_family", "job_category", "job_tags", "responsibilities"
+    ) if key in posting})
+    role_priority = _role_priority(profile, posting, role_text)
+    allowed_priorities = profile.get("allowed_role_priorities")
+    if allowed_priorities is not None:
+        if not isinstance(allowed_priorities, list) or any(
+            type(value) is not int or value not in (1, 2) for value in allowed_priorities
+        ):
+            raise ValueError("allowed_role_priorities must be a list containing only 1 or 2")
+        if role_priority not in allowed_priorities:
+            excluded_reasons.append("role priority is outside the allowed collection scope")
     if status == "closed":
         excluded_reasons.append("posting is closed")
 
@@ -327,6 +392,8 @@ def score_match(profile: dict[str, Any], posting: dict[str, Any]) -> dict[str, A
         raise ValueError("candidate profile has no scorable matching fields")
 
     base_score = round(100 * earned_weight / available_weight)
+    if profile.get("penalties_enabled") is False:
+        penalties = []
     penalty_total = sum(int(item["points"]) for item in penalties)
     score = max(0, min(100, base_score - penalty_total))
     caps: list[dict[str, Any]] = []
@@ -341,7 +408,6 @@ def score_match(profile: dict[str, Any], posting: dict[str, Any]) -> dict[str, A
     if excluded:
         score = 0
     level = _level(score, excluded)
-    role_priority = _role_priority(profile, posting, text)
     recommendation_setting = profile.get("recommendation_minimum_score")
     recommendation_threshold = _number(recommendation_setting)
     storage_threshold = _number(profile.get("storage_minimum_score"))
@@ -355,6 +421,8 @@ def score_match(profile: dict[str, Any], posting: dict[str, Any]) -> dict[str, A
         "job_id": posting.get("job_id") or posting.get("url") or "unknown",
         "title": posting.get("title") or "",
         "company": posting.get("company") or "",
+        "source": posting.get("source") or "",
+        "company_group_key": posting.get("company_group_key") or "",
         "url": posting.get("url") or "",
         "score": score,
         "base_score": base_score,
@@ -375,18 +443,46 @@ def score_match(profile: dict[str, Any], posting: dict[str, Any]) -> dict[str, A
     }
 
 
-def rank_matches(profile: dict[str, Any], postings: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    results = [score_match(profile, posting) for posting in postings]
-    return sorted(
-        results,
-        key=lambda item: (
+def company_key(company: str) -> str:
+    """Normalize legal-form decoration only; never fuzzy-merge similar firms."""
+    value = _normalize(company)
+    value = re.sub(r"^(?:주식회사|\(주\)|㈜)\s*", "", value)
+    return re.sub(r"\s*(?:주식회사|\(주\)|㈜)$", "", value).strip()
+
+
+def order_matches(profile: dict[str, Any], results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Order without deduplicating, changing scores, or mutating caller records."""
+    def item_key(item):
+        return (
             item["level"] == "excluded",
             item["role_priority"],
             -item["score"],
             item["company"],
             item["title"],
-        ),
-    )
+            item.get("source", ""),
+            str(item.get("job_id", "")),
+        )
+    if (profile.get("ranking") or {}).get("group_by") != "company":
+        return sorted(results, key=item_key)
+    groups = {}
+    for index, item in enumerate(results):
+        name = item.get("company_group_key") or company_key(item["company"])
+        # Missing companies must not become one artificial company group.
+        identity = ("company", name) if name else ("missing", index)
+        key = (item["level"] == "excluded", identity)
+        groups.setdefault(key, []).append(item)
+    ordered = sorted(groups.values(), key=lambda group: (
+        all(item["level"] == "excluded" for item in group),
+        -max(item["score"] for item in group),
+        company_key(group[0]["company"]),
+        min(str(item.get("job_id", "")) for item in group),
+    ))
+    return [item for group in ordered for item in sorted(group, key=lambda item: (
+        -item["score"], *item_key(item)))]
+
+
+def rank_matches(profile: dict[str, Any], postings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return order_matches(profile, [score_match(profile, posting) for posting in postings])
 
 
 def _load_json(path: Path) -> Any:

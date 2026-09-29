@@ -36,6 +36,71 @@ to a canonical URL. Read back appended rows before deleting the successfully
 transferred source rows; then re-number the remaining collection rows without
 overwriting user-authored fields.
 
+If a destination has been removed or is unavailable, hold those source rows and
+report the missing route. Do not recreate a closed-postings tab or infer deletion
+permission. Compound or unrecognized labels require review, not substring routing.
+
+### Bounded row-transfer execution
+
+Use `scripts/status_transfer.py` for repeatable planning and verification. It is
+an offline helper, not a connector or a job collector. Keep its inputs and plans
+in task memory; never put live sheet rows or connector targets into public files.
+
+1. Read metadata, headers, the full occupied collection values, and destination
+   values once, preferably in bounded multi-range calls. Include hidden/filtered
+   rows. Cache these snapshots for the run, including physical row numbers,
+   formulas, and the actual append boundaries. Read formatting/notes only where
+   needed to preserve affected rows. Do not repeatedly rediscover tool schemas.
+2. Build `Snapshot(headers, records, next_row)` with tuple fields and
+   `Record(row, values, key)` per occupied row. Pad missing trailing cells with
+   empty strings. Preserve formula expressions, rather than evaluated values.
+   Normalize keys with `posting_key(source, posting_id, canonical_url)` from
+   observed fields. URL fallback must preserve identity-bearing parameters;
+   do not infer an ID from company/title similarity. Missing keys are held.
+3. Call `plan_transfer(source, destinations, mappings, key_reader=...)`.
+   Destinations are keyed by `applied`, `dismissed`, and optionally `closed`;
+   actual tab IDs and mappings come only from the live workbook/private runtime.
+   Each mapping is destination header -> source header. For a legacy layout,
+   supply `projector(route, source_record, destination_headers)` once, preserving
+   identity and all manual status text. `key_reader(route, values)` must extract
+   identity from the actual projected/read-back destination values; never reuse
+   the expected key as a fabricated readback key. Unknown dates, email evidence,
+   or cross-platform matches stay blank/unknown, not invented as "none".
+4. Review held rows and append only moves with `append=True`. Check append cells
+   remain unoccupied before writing; never overwrite occupied cells. Use grouped
+   value/format operations per destination and URL range, not a format request
+   per row. Preserve existing formatting, notes, and validation; if mapping a
+   note/formula cannot be done safely, hold that row. Write literal strings to
+   avoid interpreting a job title or reason as a formula. Do not rebuild styles
+   or filters for a routine data-only transfer.
+5. Read back the exact destination rows (including reused existing rows), affected
+   source rows, and headers. Reconstruct keys from the returned values and call
+   `deletion_ranges(plan, source_now, destinations_now)`. A source edit, shifted
+   row, schema change, missing row, or destination mismatch blocks deletion.
+   Verify required hyperlink targets with `hyperlink_uris(cell)`: Sheets may
+   return a whole-cell link or rich-text runs. Link/format/note failures also
+   block deletion even when the value-only helper passes.
+6. Submit the returned descending zero-based, end-exclusive spans in a bounded
+   delete batch, then re-number only the rank column once. Read final rank/key/
+   status columns and affected destination rows to verify count conservation,
+   retained blank/unknown statuses, no duplicate writes, and contiguous ranks.
+   Do not reread unrelated full rows merely to count them. Use connector-native
+   verification; when the connected Sheets skill requires a visual check,
+   perform a focused check after rendering rather than repeated reloads.
+
+Exact existing destination rows can be reused after fresh verification; same-key
+rows with different content or multiple matches are held, never overwritten.
+After a timeout or interrupted write, reconcile the destination before any retry.
+If deletion completion is uncertain, stop blind replay: inspect the live keys and
+replan missing work. There is no atomic cross-call lock; if collaborators are
+editing or sorting during the final read/delete window, pause destructive steps
+until a stable window is available. A numeric row index alone is not identity.
+
+Measure API read/write counts and elapsed time per phase (snapshot, planning,
+append, verification, deletion, ranking). Report these when investigating latency.
+Do not claim a speedup based only on offline tests. Batch-size limits may split
+transport calls but must not silently cap the number of queued rows processed.
+
 ## Status column migration and interrupted runs
 
 For an authorized merge/removal, read every occupied row, including filtered or

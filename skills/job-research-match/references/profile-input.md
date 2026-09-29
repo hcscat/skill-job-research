@@ -60,6 +60,13 @@ limits, and connector targets.
 
 For a profile that supplies a total-career rule, apply only the field and interpretation the user selected. Do not substitute development, QA, domain, or technology-specific years for total career unless the user explicitly requests that behavior. Represent title-independent discovery through `role_scope` and classify from posting duties, categories, tags, and skills. Treat `role_priority.primary` as ordering, not exclusion.
 
+An explicit `allowed_role_priorities` list can narrow eligible groups; omission
+keeps priority as ordering only. Optional `penalties_enabled` and
+`ranking.group_by` control subtractive scoring and company-grouped display.
+Keep their actual values in the authorized private profile or live sheet, never
+as portable defaults. Changing a station list removes that query path, not jobs
+that independently match a still-authorized region.
+
 Apply employment type, salary, freshness, exclusions, storage threshold, and recommendation threshold only when the user supplied those values. A numeric minimum becomes a hard exclusion only when `hard_constraints` contains the corresponding field. Preserve unknown values instead of inventing defaults.
 
 ## Document Handling

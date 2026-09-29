@@ -6,9 +6,16 @@ The repository contains only reusable skill logic, generic examples, tests, and 
 
 The skill stores user state outside the repository. Set `JOB_RESEARCH_MATCH_HOME` when a different private location is required. Keep the state directory owner-only and back it up only to an encrypted destination.
 
+The shared `.gitignore` does not enumerate personal document filenames. Before
+authorized sensitive documents or private outputs enter a checkout, the agent
+must add applicable non-identifying ignore rules and verify both ignore and Git
+tracking state. Existing tracked content requires a separately authorized remedy;
+an ignore rule alone does not remove it. See the skill's
+[runtime document Git protection](skills/job-research-match/references/local-state-security.md#runtime-document-git-protection).
+
 ## Local instructions and cross-device privacy
 
-Keep AGENTS.md and AGENTS.override.md local, including nested copies. Shared
+Keep private AGENTS.md and AGENTS.override.md local, including nested copies. Shared
 project ignore rules must contain both names without slashes so clones inherit
 the protection. Git ignore rules do not protect already tracked files; inspect
 staged files, outgoing commits, and actual package contents before publication.
@@ -16,6 +23,16 @@ General permission to commit, push, or publish does not authorize these files.
 Any exception requires explicit permission for the named file and exact action.
 Preserve local contents and report tracked-file conflicts; do not automatically
 delete files or rewrite history.
+
+The repository-root `AGENTS.md` is the explicitly authorized public development
+guide, not a copy of any private workspace instructions. Only that exact root
+path is unignored. Its reviewed contents are pinned in
+`PUBLIC_AGENT_GUIDE_SHA256` in `scripts/privacy_check.py`; both current files and
+historical versions must match an approved digest and still pass content scans.
+Review the full document before approving a changed digest. Do not approve old
+private versions or nested instruction files. This exception prepares the guide
+for Git sharing; it does not authorize an automatic commit or push. Skill release
+bundles continue to exclude all AGENTS instruction files.
 
 Share reusable logic and sanitized templates, not filled-in settings, private
 prompts, credentials, workspace mappings, logs, databases, backups, or run reports.

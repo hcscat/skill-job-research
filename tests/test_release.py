@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 import tempfile
 import unittest
@@ -17,7 +18,7 @@ SPEC.loader.exec_module(build_release)
 
 
 class ReleaseTest(unittest.TestCase):
-    def test_local_agents_guide_is_ignored_and_not_released(self) -> None:
+    def test_only_root_public_guide_is_unignored_and_stays_out_of_release(self) -> None:
         gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
         release_manifest = json.loads(
             (ROOT / "scripts" / "release-files.json").read_text(encoding="utf-8")
@@ -26,6 +27,15 @@ class ReleaseTest(unittest.TestCase):
         self.assertIn("/AGENTS.md", gitignore)
         self.assertIn("AGENTS.md", gitignore.splitlines())
         self.assertIn("AGENTS.override.md", gitignore.splitlines())
+        self.assertIn("!/AGENTS.md", gitignore.splitlines())
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitignore").write_text(gitignore, encoding="utf-8")
+            for name, ignored in (("AGENTS.md", False), ("AGENTS.override.md", True),
+                                  ("nested/AGENTS.md", True), ("nested/AGENTS.override.md", True)):
+                result = subprocess.run(["git", "check-ignore", "-q", name], cwd=root)
+                self.assertEqual(result.returncode, 0 if ignored else 1)
         self.assertNotIn("AGENTS.md", release_manifest["files"])
         self.assertNotIn("AGENTS.md", release_manifest["trees"])
         self.assertIn("/config/*.local.*", gitignore)
@@ -40,6 +50,15 @@ class ReleaseTest(unittest.TestCase):
             "docs/security-and-local-state.md",
         ):
             self.assertIn(english_doc, release_manifest["files"])
+
+    def test_public_guide_is_development_only_and_not_installable_skill_content(self) -> None:
+        if not (ROOT / "AGENTS.md").exists() and not (ROOT / ".git").exists():
+            self.skipTest("Development guide is intentionally absent from release bundles")
+        guide = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("# Public Repository Agent Guide", guide)
+        self.assertIn("skills/job-research-match/SKILL.md", guide)
+        self.assertIn("scripts/privacy_check.py --git-history", guide)
+        self.assertFalse((ROOT / "skills/job-research-match/AGENTS.md").exists())
 
     def test_nested_instruction_files_are_excluded_from_packages(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
