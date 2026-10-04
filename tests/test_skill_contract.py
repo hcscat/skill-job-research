@@ -29,7 +29,6 @@ class SkillContractTest(unittest.TestCase):
             "matching-policy.md",
             "local-state-security.md",
             "feedback-memory.md",
-            "scheduling.md",
             "spreadsheet-output.md",
             "application-tracking.md",
         ):
@@ -41,6 +40,9 @@ class SkillContractTest(unittest.TestCase):
         self.assertIn("scripts/status_columns.py", text)
         self.assertTrue((SKILL / "scripts" / "status_transfer.py").exists())
         self.assertIn("scripts/status_transfer.py", text)
+        for helper in ("posting_status.py", "collection_settings.py"):
+            self.assertTrue((SKILL / "scripts" / helper).exists())
+            self.assertIn(f"scripts/{helper}", text)
 
     def test_removed_architectures_are_absent(self) -> None:
         self.assertFalse((ROOT / "src" / "job_research_mcp").exists())
@@ -131,17 +133,12 @@ class SkillContractTest(unittest.TestCase):
         tooling_text = (SKILL / "references" / "tooling-strategy.md").read_text(
             encoding="utf-8"
         ).casefold()
-        runner_text = (SKILL / "scripts" / "run_scheduled_search.sh").read_text(
-            encoding="utf-8"
-        ).casefold()
 
         self.assertIn("collect every candidate returned by each selected source", skill_text)
         self.assertIn("a per-run cap is allowed only when the user explicitly requests one", skill_text)
         self.assertIn("there is no default per-run posting limit", collection_text)
         self.assertIn("pages_or_cursors_checked", collection_text)
         self.assertIn("not a fixed-size sample", tooling_text)
-        self.assertIn("enumerate every result page, cursor, feed segment, or api window", runner_text)
-        self.assertIn("listed_count", runner_text)
         self.assertNotIn("prefer 10 to 30 high-quality postings", collection_text)
 
     def test_collection_reconciles_manual_status_queue_before_search(self) -> None:

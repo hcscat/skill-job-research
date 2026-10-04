@@ -18,7 +18,7 @@ SPEC.loader.exec_module(build_release)
 
 
 class ReleaseTest(unittest.TestCase):
-    def test_only_root_public_guide_is_unignored_and_stays_out_of_release(self) -> None:
+    def test_instruction_guides_are_ignored_and_stay_out_of_release(self) -> None:
         gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
         release_manifest = json.loads(
             (ROOT / "scripts" / "release-files.json").read_text(encoding="utf-8")
@@ -27,12 +27,12 @@ class ReleaseTest(unittest.TestCase):
         self.assertIn("/AGENTS.md", gitignore)
         self.assertIn("AGENTS.md", gitignore.splitlines())
         self.assertIn("AGENTS.override.md", gitignore.splitlines())
-        self.assertIn("!/AGENTS.md", gitignore.splitlines())
+        self.assertNotIn("!/AGENTS.md", gitignore.splitlines())
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             subprocess.run(["git", "init", "-q"], cwd=root, check=True)
             (root / ".gitignore").write_text(gitignore, encoding="utf-8")
-            for name, ignored in (("AGENTS.md", False), ("AGENTS.override.md", True),
+            for name, ignored in (("AGENTS.md", True), ("AGENTS.override.md", True),
                                   ("nested/AGENTS.md", True), ("nested/AGENTS.override.md", True)):
                 result = subprocess.run(["git", "check-ignore", "-q", name], cwd=root)
                 self.assertEqual(result.returncode, 0 if ignored else 1)
@@ -43,7 +43,6 @@ class ReleaseTest(unittest.TestCase):
         self.assertIn("docs/research/job-site-field-catalog-20260709.md", release_manifest["files"])
         self.assertIn("docs/research/platform-data-structures-20260813.md", release_manifest["files"])
         for english_doc in (
-            "docs/automation-guide.md",
             "docs/development-plan.md",
             "docs/manual-review-checklist.md",
             "docs/matching-policy.md",
@@ -68,7 +67,9 @@ class ReleaseTest(unittest.TestCase):
             for name in ("AGENTS.md", "AGENTS.override.md", "AGENTS.local.md", "SKILL.md"):
                 (nested / name).write_text("Synthetic test content", encoding="utf-8")
             with patch.object(build_release, "ROOT", root):
-                selected = build_release.allowed_files({"files": [], "trees": ["skills"]})
+                with self.assertRaises(ValueError):
+                    build_release.allowed_files({"files": [], "trees": ["skills"]})
+                selected = build_release.allowed_files({"files": ["skills/example/SKILL.md"]})
                 self.assertEqual([p.name for p in selected], ["SKILL.md"])
                 for name in ("AGENTS.md", "AGENTS.override.md"):
                     with self.assertRaises(ValueError):
@@ -78,10 +79,10 @@ class ReleaseTest(unittest.TestCase):
         shell = (ROOT / "scripts" / "install_skill.sh").read_text(encoding="utf-8")
         powershell = (ROOT / "scripts" / "install_skill.ps1").read_text(encoding="utf-8")
 
-        self.assertIn("skill-backups", shell)
-        self.assertIn("skill-backups", powershell)
-        self.assertIn('local_state.py" init', shell)
-        self.assertIn('local_state.py") init', powershell)
+        installer = (ROOT / "scripts/install_skill.py").read_text(encoding="utf-8")
+        self.assertIn("skill-backups", installer)
+        self.assertIn("install_skill.py", shell)
+        self.assertIn("install_skill.py", powershell)
         self.assertNotIn('${destination}.backup.', shell)
         self.assertNotIn('$Destination.backup.', powershell)
 

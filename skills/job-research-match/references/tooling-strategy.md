@@ -49,7 +49,7 @@ Before writing a collector:
 - Use an existing browser-managed login only after the user permits authenticated collection.
 - Do not automate account creation, MFA recovery, captcha solving, or access-control bypass.
 - Do not copy cookies or tokens into configuration.
-- Scheduled runs must skip authenticated sources unless the session was tested for unattended use.
+- Skip authenticated sources when no currently authorized browser session is available; report the coverage gap without requesting credentials.
 
 ## Site Notes
 

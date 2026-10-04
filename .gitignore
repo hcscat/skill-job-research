@@ -29,12 +29,11 @@ storage-state*.json
 *.sqlite3
 *.log
 
-# Local instructions stay private; only the reviewed root guide is public.
+# Local instructions require file-specific permission for each publication.
 /AGENTS.md
 AGENTS.md
 AGENTS.override.md
 /AGENTS.local.md
-!/AGENTS.md
 /.codex/
 /.claude/
 

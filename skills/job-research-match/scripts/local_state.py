@@ -100,6 +100,8 @@ def _chmod(path: Path, mode: int) -> None:
 
 
 def _private_dir(path: Path) -> Path:
+    if path.is_symlink():
+        raise ValueError("private directory must not traverse symlinks")
     path.mkdir(parents=True, exist_ok=True, mode=0o700)
     _chmod(path, 0o700)
     return path
@@ -313,6 +315,8 @@ def append_feedback(root: Path, args: argparse.Namespace) -> dict[str, Any]:
 
 
 def save_profile(root: Path, input_path: Path, name: str) -> dict[str, Any]:
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", name):
+        raise ValueError("profile name must be a simple identifier")
     init_state(root)
     profile = _read_json(input_path, None)
     if not isinstance(profile, dict):
@@ -401,9 +405,13 @@ def prune_runs(root: Path, days: int | None = None) -> dict[str, Any]:
     init_state(root)
     settings = _read_json(_paths(root)["settings"], {})
     retention = int(days if days is not None else settings.get("run_retention_days", 90))
+    if retention < 1:
+        raise ValueError("retention must be positive")
     cutoff = datetime.now(timezone.utc) - timedelta(days=retention)
     removed = 0
     for path in _paths(root)["runs"].glob("*.json"):
+        if path.is_symlink():
+            continue
         modified = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc)
         if modified < cutoff:
             path.unlink()
@@ -412,30 +420,39 @@ def prune_runs(root: Path, days: int | None = None) -> dict[str, Any]:
 
 
 def privacy_check(root: Path) -> dict[str, Any]:
-    init_state(root)
-    paths = _paths(root)
+    # Auditing must not initialize state or silently repair unsafe permissions.
     issues: list[str] = []
-    try:
-        settings = _read_json(paths["settings"], {})
-        issues.extend(f"secret key in settings: {item}" for item in _secret_paths(settings))
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        issues.append(f"settings unreadable: {exc}")
-    try:
-        targets = _read_json(paths["targets"], {})
-        issues.extend(f"secret key in targets: {item}" for item in _secret_paths(targets))
-        issues.extend(f"unsafe target value: {item}" for item in _unsafe_state_paths(targets))
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        issues.append(f"targets unreadable: {exc}")
-    if os.name == "posix":
-        for key in ("root", "profiles", "memory", "runs", "workspace"):
-            mode = paths[key].stat().st_mode & 0o777
-            if mode & 0o077:
-                issues.append(f"{key} directory is not owner-only")
-        for path in (paths["settings"], paths["targets"], paths["feedback"], paths["preferences"]):
-            mode = path.stat().st_mode & 0o777
-            if mode & 0o077:
-                issues.append(f"{path.name} is not owner-only")
-    return {"status": "ok" if not issues else "failed", "issues": issues}
+    if not root.is_dir() or root.is_symlink():
+        return {"status": "failed", "issues": ["state root missing or symlinked"]}
+    checked = 0
+    for path in [root, *root.rglob("*")]:
+        relative = path.relative_to(root).as_posix()
+        if path.is_symlink():
+            issues.append(f"{relative}: symlink requires review")
+            continue
+        if os.name == "posix" and path.stat().st_mode & 0o077:
+            issues.append(f"{relative}: not owner-only")
+        if not path.is_file():
+            continue
+        checked += 1
+        if path.stat().st_size > 2_000_000:
+            issues.append(f"{relative}: oversized content was not scanned")
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+            if "\0" in text:
+                raise ValueError("binary")
+            if path.suffix == ".json":
+                values = [json.loads(text)]
+            elif path.suffix == ".jsonl":
+                values = [json.loads(line) for line in text.splitlines() if line.strip()]
+            else:
+                values = [text]
+            if any(_secret_paths(v) or _unsafe_state_paths(v) for v in values):
+                issues.append(f"{relative}: unsafe content")
+        except (OSError, ValueError, UnicodeError):
+            issues.append(f"{relative}: unreadable or unsupported content")
+    return {"status": "ok" if not issues else "failed", "issues": issues, "files_checked": checked}
 
 
 def main() -> int:

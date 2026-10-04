@@ -11,7 +11,7 @@ Korean translation.
 - Added posting normalization and explainable matching policies
 - Added login and private local-state safeguards
 - Added explainable, deletable preference memory
-- Added on-demand and cron/agent automation guidance
+- Added on-demand research guidance
 - Added the privacy preflight scanner and release allow-list
 - Added public platform field/transport catalogs without candidate-specific values
 
@@ -23,7 +23,6 @@ Korean translation.
    user.
 3. Review scores and levels against a sample of active postings.
 4. Verify each platform's login-session behavior interactively where authorized.
-5. Create and test a schedule only after an on-demand run succeeds.
 
 Stages involving a real resume, career document, or login session require the user
 to name or authorize that input in the current request.

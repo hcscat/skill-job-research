@@ -118,10 +118,31 @@ The same protocol applies to official APIs, feeds, company ATS pages, and job pl
 
 Wanted's visible `마감일: 상시채용` label is not a status signal: old and open
 postings can display the same label. For every Wanted detail page, parse the
-posting-scoped `__NEXT_DATA__.initialData.status` value first (`active`/`open`
-versus `close`/`closed`). Use a past `close_time`, or an explicit closed
-message such as `지원이 마감되었습니다`, only as structured fallbacks. A
+posting-scoped `__NEXT_DATA__.initialData.status` value (`active`/`open`
+versus `close`/`closed`). Reconcile it with hidden flags, `close_time`, and
+explicit visible closed messages before accepting an active flag. Closed
+evidence overrides stale active evidence. Disabled or hidden apply controls,
+scripts, and templates do not prove activity. A
 generic occurrence of `마감`, `상시채용`, or a stale search result must not
 change status. If neither a posting-scoped status nor an apply control is
 visible, record `active_status=unknown`, the evidence, and `last_verified_at`;
 never silently keep it as active.
+
+Use `scripts/posting_status.py` for deadline comparisons: a timestamp expires
+at that instant; a date-only deadline expires after that local calendar day.
+Keep an unparseable deadline unknown, never replace it with an invented date.
+
+### Current-run settings and failure accounting
+
+Resolve one settings snapshot before querying any source. When a live sheet is
+the configured authority, read its search and scoring tabs for this run, then
+pass their normalized values and `settings_source=live-sheet` plus a timezone-
+aware `settings_verified_at` to the collector. `scripts/collection_settings.py`
+validates freshness at run start; that timestamp is a caller assertion, not a
+substitute for the actual sheet read. Refresh platform filter codes alongside
+the requested values. Do not read a stale private profile as an implicit fallback.
+
+Separate transport/parser failures from eligibility exclusions. Any outstanding
+detail failure makes coverage partial, even if every list page was traversed.
+Record failed posting IDs privately for reconciliation; do not retry successful
+external writes. Source-only tests do not establish live platform compatibility.

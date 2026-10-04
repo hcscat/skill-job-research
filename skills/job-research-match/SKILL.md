@@ -1,6 +1,6 @@
 ---
 name: job-research-match
-description: Collect, verify, rank, track, and spreadsheet-deliver active job postings using explicitly tagged career documents or prompt-written preferences. Use for job-source discovery, browser-assisted or public collection, evidence-based matching, Gmail application-completion reconciliation, Google Sheets job-ledger maintenance, private local preference memory, on-demand research, or scheduled job-search setup in Codex, Claude Code, and other SKILL.md-compatible AI agents.
+description: Collect, verify, rank, track, and spreadsheet-deliver active job postings using explicitly tagged career documents or prompt-written preferences. Use for job-source discovery, browser-assisted or public collection, evidence-based matching, Gmail application-completion reconciliation, Google Sheets job-ledger maintenance, private local preference memory, and on-demand research in Codex, Claude Code, and other SKILL.md-compatible AI agents.
 ---
 
 # Job Research Match
@@ -20,6 +20,7 @@ description: Collect, verify, rank, track, and spreadsheet-deliver active job po
 4. Discover sources before collecting. Read `references/source-discovery.md` and reuse the repository field catalog when it is present.
    - The repository catalog is a public schema and transport reference only. It contains no candidate-specific search values or connector targets.
    - Read search keywords, role priorities, locations, station paths, career/salary limits, employment rules, and exclusion terms from the current authorized profile or live sheet immediately before execution.
+   - For a live-sheet-backed run, validate the current-run snapshot with `scripts/collection_settings.py`; a saved profile alone is not evidence that the sheet was read. Refresh platform filter codes when values change.
 5. Select the least fragile permitted collection method. Read `references/tooling-strategy.md`.
 6. Handle login safely.
    - Use an existing user-controlled browser session when authenticated collection is allowed.
@@ -35,7 +36,8 @@ description: Collect, verify, rank, track, and spreadsheet-deliver active job po
    - If a repository-local execution area is required, use the explicitly ignored `workspace/job-collection/` directory (for example, `profile.local.*`, `targets.local.*`, and redacted `runs/`). Never add that directory to a release or commit its contents.
    - Keep portable references, examples, tests, and release manifests free of the current user's query terms, location lists, station lists, thresholds, exclusions, and raw postings.
 14. Do not submit applications, upload candidate documents, or message recruiters.
-15. For recurring searches, read `references/scheduling.md`. Test the same query on demand before creating an automation.
+
+Research runs on demand. This package does not include a scheduler or recurring-search runner.
 
 ## Input Rules
 
@@ -50,7 +52,7 @@ description: Collect, verify, rank, track, and spreadsheet-deliver active job po
 - Prefer interactive browser login performed by the user and reuse the browser-managed session.
 - Store only non-secret site policy such as `browser-session`, `manual`, or `public-only` in local settings.
 - Keep any unavoidable session export outside the repository with owner-only permissions, and require explicit user approval before creating it.
-- Skip a login-only source during unattended runs when no tested session is available. Report the skipped source instead of requesting credentials.
+- Skip a login-only source when no currently authorized browser session is available. Report the skipped source instead of requesting credentials.
 
 ## Memory Controls
 
@@ -93,10 +95,11 @@ When the task is only source or tool research, return a collection plan instead 
 - `references/tooling-strategy.md`: search, browser, scripts, and manual import choices
 - `references/collection-policy.md`: normalized posting schema and evidence rules
 - `scripts/wanted_status.py`: conservative Wanted detail-status parser with auditable evidence
+- `scripts/posting_status.py`: timezone-aware deadline evidence without assuming unknown means active
+- `scripts/collection_settings.py`: current-run settings validation and schema normalization
 - `references/matching-policy.md`: deterministic score and recommendation gates
 - `references/local-state-security.md`: private storage and login safety
 - `references/feedback-memory.md`: long-term local preference learning
-- `references/scheduling.md`: Codex automation, Claude Code, and cron workflows
 - `references/spreadsheet-output.md`: privacy-safe spreadsheet schema, deduplication, and write verification
 - `scripts/status_transfer.py`: pure row-transfer planning, exact readback gates, and grouped deletion spans
 - `references/application-tracking.md`: Gmail completion reconciliation, applied-posting tracking, and connector-safe updates

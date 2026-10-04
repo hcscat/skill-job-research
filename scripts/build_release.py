@@ -41,25 +41,24 @@ def version() -> str:
 
 
 def allowed_files(config: dict[str, object]) -> list[Path]:
+    if config.get("trees"):
+        raise ValueError("Release trees are not supported; enumerate reviewed files explicitly")
     selected: set[Path] = set()
     for relative in config.get("files", []):
-        path = ROOT / str(relative)
-        if path.name in EXCLUDED_NAMES:
-            raise ValueError("Local instruction files must not be explicitly packaged")
+        relative = Path(str(relative))
+        if relative.is_absolute() or ".." in relative.parts or "\\" in str(relative):
+            raise ValueError("Release path must stay inside the source root")
+        path = ROOT / relative
+        if (EXCLUDED_PARTS.intersection(relative.parts) or path.name in EXCLUDED_NAMES
+                or any(part in str(relative).casefold() for part in (".local.", ".private."))
+                or any(p in {"private", "profiles", "credentials", "sessions"} for p in relative.parts)
+                or path.name.startswith(".env")):
+            raise ValueError("Private artifacts must not be explicitly packaged")
+        if any((ROOT / Path(*relative.parts[:i])).is_symlink() for i in range(1, len(relative.parts) + 1)):
+            raise ValueError("Release paths must not traverse symlinks")
         if not path.is_file():
             raise FileNotFoundError(f"release file is missing: {relative}")
         selected.add(path)
-    for relative in config.get("trees", []):
-        tree = ROOT / str(relative)
-        if not tree.is_dir():
-            raise FileNotFoundError(f"release tree is missing: {relative}")
-        for path in tree.rglob("*"):
-            if not path.is_file():
-                continue
-            parts = path.relative_to(ROOT).parts
-            if EXCLUDED_PARTS.intersection(parts) or path.name in EXCLUDED_NAMES or path.suffix == ".pyc":
-                continue
-            selected.add(path)
     return sorted(selected, key=lambda path: path.relative_to(ROOT).as_posix())
 
 

@@ -24,15 +24,15 @@ Any exception requires explicit permission for the named file and exact action.
 Preserve local contents and report tracked-file conflicts; do not automatically
 delete files or rewrite history.
 
-The repository-root `AGENTS.md` is the explicitly authorized public development
-guide, not a copy of any private workspace instructions. Only that exact root
-path is unignored. Its reviewed contents are pinned in
-`PUBLIC_AGENT_GUIDE_SHA256` in `scripts/privacy_check.py`; both current files and
-historical versions must match an approved digest and still pass content scans.
-Review the full document before approving a changed digest. Do not approve old
-private versions or nested instruction files. This exception prepares the guide
-for Git sharing; it does not authorize an automatic commit or push. Skill release
-bundles continue to exclude all AGENTS instruction files.
+The repository-root guide was previously published after a content review.
+Its reviewed contents are pinned in `PUBLIC_AGENT_GUIDE_SHA256` in
+`scripts/privacy_check.py` so known historical copies can be audited. These
+digests are content-review records, not publication permission. The root path
+is now ignored like nested guides; any new guide change requires explicit
+file-and-action permission. Leave previously published content and local edits
+intact until a scoped remedy is authorized. Check the staged diff and outgoing
+commits separately: a successful content scan does not establish authorization.
+Skill release bundles and installations exclude all AGENTS instruction files.
 
 Share reusable logic and sanitized templates, not filled-in settings, private
 prompts, credentials, workspace mappings, logs, databases, backups, or run reports.
@@ -45,13 +45,24 @@ device must not be described as configured without verification.
 - Prefer a user-controlled browser profile or an operating system credential store.
 - Never paste a password, cookie, token, authorization header, or browser storage state into skill configuration.
 - Do not export an authenticated browser session unless the user explicitly accepts the risk and the file remains outside Git with owner-only permissions.
-- Scheduled runs must fail closed when an authenticated session is unavailable. They must not prompt for credentials or silently downgrade security controls.
+- Skip login-dependent sources when an authorized browser session is unavailable. Do not prompt for credentials or silently downgrade security controls.
 
 ## External Actions
 
 The skill may inspect and rank job postings. It must not submit applications, upload documents, send recruiter messages, or disclose personal data without explicit approval for that exact action.
 
 ## Public Release Gate
+
+Scan exact staged blobs with `scripts/privacy_check.py --staged` as well as the
+working tree and reachable history. A sanitized working file does not sanitize
+its staged version. Binary, oversized, or non-UTF-8 content blocks publication
+until separately reviewed; it must not be silently called clean. A pattern scan
+is not proof that every possible personal search preference has been removed.
+
+The release manifest lists individual files only. Adding a source file requires
+an explicit reviewed manifest update; ignored and untracked files are never
+included merely because they appear under a source tree. Installers use the same
+allow-list for skill files, reject symlink paths, and retain a rollback backup.
 
 Run the privacy scanner and tests before publishing:
 

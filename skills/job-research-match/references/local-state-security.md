@@ -83,9 +83,16 @@ repository, an installed skill, or an external device.
 2. The agent uses the existing browser session only after the user permits the site.
 3. `settings.json` stores only the mode: `browser-session`, `manual`, or `public-only`.
 4. Credentials remain in the browser or operating-system credential store.
-5. Unattended runs skip login-dependent sources unless a tested local browser session is available.
+5. Skip login-dependent sources when no currently authorized browser session is available.
 6. Session export is exceptional, requires explicit approval, must stay outside Git, and must use owner-only permissions and short retention.
 
 ## Retention
 
 Use the shortest practical retention. Default to 365 days for feedback and 90 days for run outputs. Let the user inspect, forget one job, or reset all learned memory at any time. Do not print the private-state absolute path in shared output.
+
+`privacy-check` is read-only and checks structured and text files recursively;
+it reports unsafe permissions and unsupported content without silently repairing
+them. Profile names are simple identifiers, not paths. The explicit `prune-runs`
+command removes expired JSON run records only; it does not run in the background.
+Legacy run folders, including completed or interrupted runs, remain held for
+explicit review. Feedback retention is a policy, not automatic deletion.
