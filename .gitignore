@@ -29,13 +29,26 @@ storage-state*.json
 *.sqlite3
 *.log
 
-# Local instructions require file-specific permission for each publication.
-/AGENTS.md
+# AI instruction files, translations and tool folders are local-only at every depth.
 AGENTS.md
+AGENTS.KO.md
 AGENTS.override.md
-/AGENTS.local.md
-/.codex/
-/.claude/
+AGENTS.override.KO.md
+AGENTS.local.md
+.agents.md
+CLAUDE.md
+CLAUDE.KO.md
+CLAUDE.local.md
+GEMINI.md
+GEMINI.KO.md
+GEMINI.local.md
+.agents/
+.agent/
+_agents/
+_agent/
+.claude/
+.codex/
+.gemini/
 
 # User-specific search policy and connector targets. Public examples remain tracked.
 /config/*.local.*

@@ -85,11 +85,7 @@ The clean directory and deterministic ZIP are written under `dist/`. For a new r
 ## Privacy Before Git
 
 Read [SECURITY.md](SECURITY.md) for shared development privacy guidance.
-Treat every `AGENTS.md` and `AGENTS.override.md` as local-only by default, including
-the repository root. Publishing a guide requires explicit permission for that
-file and that action; a previous content review or general commit request is not
-permission. Preserve previously tracked copies pending an authorized remedy, and
-exclude all instruction guides from skill installations and release bundles.
+AI agent instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, their override, local and translated variants) and tool folders (`.agents/`, `.claude/`, `.codex/`, `.gemini/`) are local-only at every depth, including the repository root. They are ignored, rejected by the privacy check and excluded from skill installations and release bundles. Keep your own agent guide locally; this repository does not ship one.
 
 Also run `scripts/privacy_check.py --staged` before committing: it scans the actual
 Git index, independently of working files. Release and installation manifests

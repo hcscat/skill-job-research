@@ -67,8 +67,9 @@ SENSITIVE_VALUE_PATTERNS = {
         + r")[^/\\s'\"]+(?:/|$)|[A-Za-z]:\\\\Users\\\\[^\\s'\"]+"
     ),
     "email address": re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE),
-    "phone number": re.compile(r"(?<!\d)(?:\+82[-. ]?1[016789]|01[016789])[-. ]?\d{3,4}[-. ]?\d{4}(?!\d)"),
-    "resident identifier": re.compile(r"(?<!\d)\d{6}[- ]?[1-4]\d{6}(?!\d)"),
+    # ASCII letters or digits on either side mean a hex digest or UUID, not contact data.
+    "phone number": re.compile(r"(?<![0-9A-Za-z])(?:\+82[-. ]?1[016789]|01[016789])[-. ]?\d{3,4}[-. ]?\d{4}(?![0-9A-Za-z])"),
+    "resident identifier": re.compile(r"(?<![0-9A-Za-z])\d{6}[- ]?[1-4]\d{6}(?![0-9A-Za-z])"),
 }
 LOGIN_MODES = {"browser-session", "manual", "public-only"}
 DECISIONS = {"interested", "saved", "not_interested", "dismissed", "applied", "interview", "offer", "rejected"}

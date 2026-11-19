@@ -15,6 +15,10 @@ SPEC = importlib.util.spec_from_file_location("build_release", SCRIPT)
 assert SPEC and SPEC.loader
 build_release = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(build_release)
+PRIVACY_SPEC = importlib.util.spec_from_file_location("privacy_check_for_release", ROOT / "scripts" / "privacy_check.py")
+assert PRIVACY_SPEC and PRIVACY_SPEC.loader
+privacy_check = importlib.util.module_from_spec(PRIVACY_SPEC)
+PRIVACY_SPEC.loader.exec_module(privacy_check)
 
 
 class ReleaseTest(unittest.TestCase):
@@ -24,16 +28,16 @@ class ReleaseTest(unittest.TestCase):
             (ROOT / "scripts" / "release-files.json").read_text(encoding="utf-8")
         )
 
-        self.assertIn("/AGENTS.md", gitignore)
-        self.assertIn("AGENTS.md", gitignore.splitlines())
-        self.assertIn("AGENTS.override.md", gitignore.splitlines())
-        self.assertNotIn("!/AGENTS.md", gitignore.splitlines())
+        for name in ("AGENTS.md", "AGENTS.override.md", "CLAUDE.md", "CLAUDE.local.md", "GEMINI.md", ".agents/"):
+            self.assertIn(name, gitignore.splitlines())
+        self.assertFalse(any(line.startswith("!") and "AGENTS" in line for line in gitignore.splitlines()))
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             subprocess.run(["git", "init", "-q"], cwd=root, check=True)
             (root / ".gitignore").write_text(gitignore, encoding="utf-8")
             for name, ignored in (("AGENTS.md", True), ("AGENTS.override.md", True),
-                                  ("nested/AGENTS.md", True), ("nested/AGENTS.override.md", True)):
+                                  ("nested/AGENTS.md", True), ("nested/AGENTS.override.md", True),
+                                  ("CLAUDE.md", True), ("nested/CLAUDE.local.md", True)):
                 result = subprocess.run(["git", "check-ignore", "-q", name], cwd=root)
                 self.assertEqual(result.returncode, 0 if ignored else 1)
         self.assertNotIn("AGENTS.md", release_manifest["files"])
@@ -50,14 +54,16 @@ class ReleaseTest(unittest.TestCase):
         ):
             self.assertIn(english_doc, release_manifest["files"])
 
-    def test_public_guide_is_development_only_and_not_installable_skill_content(self) -> None:
-        if not (ROOT / "AGENTS.md").exists() and not (ROOT / ".git").exists():
-            self.skipTest("Development guide is intentionally absent from release bundles")
-        guide = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn("# Public Repository Agent Guide", guide)
-        self.assertIn("skills/job-research-match/SKILL.md", guide)
-        self.assertIn("scripts/privacy_check.py --git-history", guide)
-        self.assertFalse((ROOT / "skills/job-research-match/AGENTS.md").exists())
+    def test_release_manifest_and_skill_never_list_instruction_files(self) -> None:
+        # Local guides are never read by shared tests; a clone without one must pass.
+        release_manifest = json.loads(
+            (ROOT / "scripts" / "release-files.json").read_text(encoding="utf-8")
+        )
+        for relative in release_manifest["files"]:
+            self.assertFalse(privacy_check.is_instruction_path(relative), relative)
+        skill = ROOT / "skills" / "job-research-match"
+        self.assertFalse(any(privacy_check.is_instruction_path(path.relative_to(ROOT).as_posix())
+                             for path in skill.rglob("*") if path.is_file()))
 
     def test_nested_instruction_files_are_excluded_from_packages(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -105,7 +111,8 @@ class ReleaseTest(unittest.TestCase):
             self.assertFalse((release / "reports").exists())
             self.assertTrue((release / "config" / "job-search-settings.example.yaml").exists())
             self.assertFalse(any(".local." in path.name for path in release.rglob("*")))
-            self.assertFalse(any(path.name == "AGENTS.md" for path in release.rglob("*")))
+            self.assertFalse(any(privacy_check.is_instruction_path(path.relative_to(release).as_posix())
+                                 for path in release.rglob("*") if path.is_file()))
             self.assertGreater(first["file_count"], 20)
 
 

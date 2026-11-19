@@ -15,24 +15,13 @@ an ignore rule alone does not remove it. See the skill's
 
 ## Local instructions and cross-device privacy
 
-Keep private AGENTS.md and AGENTS.override.md local, including nested copies. Shared
-project ignore rules must contain both names without slashes so clones inherit
-the protection. Git ignore rules do not protect already tracked files; inspect
+Keep AI agent instruction files local at every depth: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, their override, local and `.KO.md` variants, and the `.agents/`, `.agent/`, `_agents/`, `_agent/`, `.claude/`, `.codex/` and `.gemini/` folders. Shared project ignore rules list these names without slashes so clones inherit the protection. Git ignore rules do not protect already tracked files; inspect
 staged files, outgoing commits, and actual package contents before publication.
 General permission to commit, push, or publish does not authorize these files.
-Any exception requires explicit permission for the named file and exact action.
 Preserve local contents and report tracked-file conflicts; do not automatically
 delete files or rewrite history.
 
-The repository-root guide was previously published after a content review.
-Its reviewed contents are pinned in `PUBLIC_AGENT_GUIDE_SHA256` in
-`scripts/privacy_check.py` so known historical copies can be audited. These
-digests are content-review records, not publication permission. The root path
-is now ignored like nested guides; any new guide change requires explicit
-file-and-action permission. Leave previously published content and local edits
-intact until a scoped remedy is authorized. Check the staged diff and outgoing
-commits separately: a successful content scan does not establish authorization.
-Skill release bundles and installations exclude all AGENTS instruction files.
+A root guide was published before this policy and remains in Git history. `HISTORICAL_PUBLISHED_GUIDE_SHA256` in `scripts/privacy_check.py` records only that exact copy so history scans pass without a rewrite; working-tree, staged and release scans reject every instruction file regardless of digest. Check the staged diff and outgoing commits separately: a successful content scan does not establish authorization. Skill release bundles and installations exclude all instruction files.
 
 Share reusable logic and sanitized templates, not filled-in settings, private
 prompts, credentials, workspace mappings, logs, databases, backups, or run reports.
