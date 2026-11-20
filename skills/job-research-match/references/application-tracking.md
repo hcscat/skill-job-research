@@ -35,11 +35,7 @@ Use this reference only when the user explicitly requests Gmail inspection, appl
 
 ### Collection-sheet status queue
 
-Before source searches, follow the authoritative pre-collection status queue and
-migration procedure in `references/spreadsheet-output.md`. Resolve `지원여부`
-and optional legacy `확인` from live headers. Never recreate a removed column or
-assume an applied-postings tab has the collection schema. Preserve application
-confirmation over a closed label and retain ambiguous compound values for review.
+Before source searches, follow the authoritative pre-collection status queue and migration procedure in `references/spreadsheet-output.md`. Resolve `지원여부` and optional legacy `확인` from live headers. Never recreate a removed column or assume an applied-postings tab has the collection schema. Preserve application confirmation over a closed label and retain ambiguous compound values for review.
 
 ## Reporting
 

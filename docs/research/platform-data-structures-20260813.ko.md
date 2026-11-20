@@ -1,7 +1,6 @@
 # 채용 플랫폼 공개 데이터 구조 검토 (한국어 부가 번역)
 
-영문 문서 [`platform-data-structures-20260813.md`](platform-data-structures-20260813.md)가
-주요 문서이며, 이 파일은 읽기 편의를 위한 부가 번역이다.
+영문 문서 [`platform-data-structures-20260813.md`](platform-data-structures-20260813.md)가 주요 문서이며, 이 파일은 읽기 편의를 위한 부가 번역이다.
 
 ## 범위와 한계
 

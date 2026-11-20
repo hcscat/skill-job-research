@@ -79,9 +79,7 @@ Always include:
 - local files updated, without exposing the user's home path or personal data
 - confirmation that no application or recruiter message was sent
 
-When status reconciliation runs before collection, also report the number moved to
-each destination tab, any rows left because their status was blank or unrecognized,
-and the destination readback result.
+When status reconciliation runs before collection, also report the number moved to each destination tab, any rows left because their status was blank or unrecognized, and the destination readback result.
 
 When Gmail or a spreadsheet was explicitly requested, also include the checked scope, reconciliation rule, affected row count, and whether mail state changed. Never include message bodies, account identifiers, absolute local paths, or credential details.
 

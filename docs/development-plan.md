@@ -1,7 +1,6 @@
 # Job Research Match Skill development plan
 
-This English document is the primary version. The `.ko.md` file is an ancillary
-Korean translation.
+This English document is the primary version. The `.ko.md` file is an ancillary Korean translation.
 
 ## Completed scope
 
@@ -17,12 +16,9 @@ Korean translation.
 
 ## Next evaluation stages
 
-1. Validate behavior with synthetic profiles and postings that contain no personal
-   data.
-2. Check profile extraction accuracy using a document explicitly tagged by the
-   user.
+1. Validate behavior with synthetic profiles and postings that contain no personal data.
+2. Check profile extraction accuracy using a document explicitly tagged by the user.
 3. Review scores and levels against a sample of active postings.
 4. Verify each platform's login-session behavior interactively where authorized.
 
-Stages involving a real resume, career document, or login session require the user
-to name or authorize that input in the current request.
+Stages involving a real resume, career document, or login session require the user to name or authorize that input in the current request.
