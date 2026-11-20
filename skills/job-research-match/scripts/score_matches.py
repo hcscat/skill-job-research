@@ -146,9 +146,13 @@ def _role_priority(profile: dict[str, Any], posting: dict[str, Any], text: str) 
 
     priorities = profile.get("role_priority") or {}
     primary = _as_strings(priorities.get("primary") if isinstance(priorities, dict) else None)
+    alias_map = {}
+    if isinstance(priorities, dict):
+        for name, values in (priorities.get("aliases") or {}).items():
+            alias_map.setdefault(_normalize(name), []).extend(_as_strings(values))
     for family in primary:
         key = _normalize(family)
-        aliases = _as_strings((priorities.get("aliases") or {}).get(key)) if isinstance(priorities, dict) else []
+        aliases = alias_map.get(key, [])
         if any(_contains(text, alias) for alias in [key, *aliases]):
             return 1
     return 2
