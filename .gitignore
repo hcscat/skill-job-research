@@ -1,33 +1,17 @@
+# Local-only material is ignored by folder. Keep anything private inside one of these folders.
+/workspace/
+private/
+
+# Environments, builds and caches
 .venv/
-__pycache__/
-*.pyc
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
 node_modules/
 dist/
 build/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 *.egg-info/
-*.db
-.env
-.env.*
-config.yaml
-data/
-output/
-tmp/
-reports/
-private/
-profiles/
-credentials/
-sessions/
-.job-research-match/
-playwright/.auth/
-storage-state*.json
-*.auth.json
-*.session.json
-*.sqlite
-*.sqlite3
-*.log
 
 # AI instruction files, translations and tool folders are local-only at every depth.
 AGENTS.md
@@ -50,24 +34,49 @@ _agent/
 .codex/
 .gemini/
 
-# User-specific search policy and connector targets. Public examples remain tracked.
+# Files that no folder rule can cover
 /config/*.local.*
 /config/*.private.*
 /config/*-local.*
 /config/*-private.*
 /connector-targets.*
-/workspace/
-# Optional per-user job collection fallback; never package or publish it.
-/workspace/job-collection/
-/local/
-/attachments/
-/screenshots/
-
-# Machine and credential artifacts.
+.env
+.env.*
 .DS_Store
-**/.DS_Store
 Thumbs.db
+*.pyc
+
+# Safety net for clones: credentials, browser sessions, local databases and logs
 *.pem
 *.key
 *.p12
 *.pfx
+credentials/
+sessions/
+.job-research-match/
+playwright/.auth/
+storage-state*.json
+*.auth.json
+*.session.json
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+*.sqlite3-wal
+*.sqlite3-shm
+*.sqlite3-journal
+*.log
+
+# Generated run output and captures, if a tool writes them inside a clone
+data/
+output/
+reports/
+tmp/
+profiles/
+attachments/
+screenshots/
