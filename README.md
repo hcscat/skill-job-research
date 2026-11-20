@@ -52,7 +52,7 @@ The default location is platform-specific and outside the repository. Override i
 ## Run And Test
 
 ```bash
-./.venv/bin/python -m pytest -q
+./.venv/bin/python -m pytest -q -p no:cacheprovider
 ./.venv/bin/python skills/job-research-match/scripts/local_state.py privacy-check
 ./scripts/privacy_check.py
 ```
@@ -63,7 +63,7 @@ Build a privacy-checked source bundle with no Git history or user state:
 ./scripts/build_release.py
 ```
 
-The clean directory and deterministic ZIP are written under `dist/`. For a new repository, publish from that clean directory without copying an existing `.git` directory. When converting an existing public repository in place, replace its default branch with a new root commit built from the clean release, and do not push archival branches or tags that retain the retired application history.
+The clean directory and deterministic ZIP are written under `dist/`. They are distribution artifacts, not a replacement for the development checkout or its history. For a new repository, an explicitly authorized publication can use that clean directory without copying an existing `.git` directory. Routine updates do not require a new repository or history rewrite. If an audit finds sensitive history, prepare a scoped remediation and obtain separate authorization before rewriting refs, force-pushing, or retiring a repository.
 
 ## Documentation
 
@@ -95,6 +95,6 @@ Run `./scripts/privacy_check.py --all-files` before every commit or public relea
 
 The history audit rejects local-only filenames and non-noreply commit email metadata. For a public repository, configure a GitHub noreply address or a deliberately non-personal publishing identity before the first commit. Cleaning the current tree does not remove information already present in reachable commits.
 
-For an anonymous public release, prefer the clean bundle produced by `./scripts/build_release.py`. It contains an explicit file manifest and no Git history. After an in-place conversion, verify the public default branch, branches, tags, and repository search results before treating the migration as complete.
+For a history-free distribution, use the clean bundle produced by `./scripts/build_release.py`. After an authorized history remediation, verify branches, tags, and known old-object access separately; a clean bundle does not sanitize the existing repository or hosting-service retained objects.
 
 Official compatibility references: [Codex skills](https://developers.openai.com/codex/skills) and [Claude Code skills](https://code.claude.com/docs/en/slash-commands).
