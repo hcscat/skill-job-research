@@ -20,6 +20,8 @@ Create directories with owner-only permissions where the platform supports POSIX
 
 ## State Contents
 
+The state validator rejects user-home paths in ordinary prose as well as standalone paths, including Windows paths with normal separators. Publication checks also scan mobile-phone and resident-identifier patterns. These checks are pattern-based rather than a proof that every sensitive fact is absent. A batch adapter may hold an unsafe posting individually and save safe postings, provided the held record contains only a safe ordinal/reason and never echoes rejected text; unsafe settings or batch metadata must still fail validation.
+
 - `settings.json`: non-secret behavior and retention settings
 - `targets.json`: explicitly authorized spreadsheet, Drive-folder, or mail-scope targets without credentials
 - `profiles/`: redacted structured candidate profiles
