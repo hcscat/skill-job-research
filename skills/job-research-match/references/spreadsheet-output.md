@@ -98,6 +98,10 @@ Keep search conditions in a separate sheet or clearly separated metadata block. 
 
 ## Write And Verification
 
+### Authorized rank-band presentation
+
+Keep presentation choices separate from search eligibility. When the user requests persistent rank bands, store their authorized `presentation.row_shading` policy in private settings or the live settings sheet, not public defaults. The policy supplies `rank_header`, `last_header`, `milestone_interval`, `base_fill`, `even_fill`, `milestone_fill`, and optional `replace_scoped_background_rules`. Resolve headers and the final occupied boundary from the live sheet. Use `scripts/spreadsheet_formatting.py:plan_rank_shading` after every append, transfer, deletion, ranking or cleanup, not just the first formatting request. Pass the current conditional rules; execute the returned background-only batch and verify every affected row. The helper keeps milestone fills above even-rank fills, removes matching old rules before adding replacements, and never colors the header or columns beyond the configured final header. Blank ranks never match. Unrelated rules and cell metadata remain untouched; replacing all scoped background-only rules requires the user's explicit policy. Do not reintroduce a superseded duplicate-warning fill, including via copied row formats. Clear old base backgrounds only in the authorized data rectangle, then verify rule count, rule priority, the last occupied row, and uncolored outside/empty areas. An enabled policy is a delivery-finalization requirement, not a reason to change applications, scores or eligibility.
+
 1. Write headers and values with structured spreadsheet operations.
 2. Freeze the header row, enable a filter, wrap long text, and keep URLs directly clickable when the spreadsheet API supports those actions.
 3. Use a single bounded batch where practical. Avoid broad whole-sheet replacement.
