@@ -130,7 +130,7 @@ if __name__ == "__main__":
 # Digit runs inside hex digests or UUIDs are not contact data (same boundary as the publication scanner).
 @pytest.mark.parametrize('value', [
     'evidence sha256 3d4738cde55905a3c6db1d8ba151fb' + '983336' + '2174630' + 'a1eb11431ceb444870450',
-    'event 4f' + '010' + '1234' + '5678' + 'ab-1c2d-4e5f-8a9b-0c1d2e3f4a5b',
+    'event 1c2d4e5f-8a9b-4c1d-8e3f-' + '010' + '1234' + '5678' + 'a',
 ])
 def test_state_validator_ignores_digit_runs_inside_hex_digests(value):
     local_state._require_safe_state({'note': value})
@@ -139,6 +139,10 @@ def test_state_validator_ignores_digit_runs_inside_hex_digests(value):
 @pytest.mark.parametrize('value', [
     '연락처' + '010' + '-0000-' + '0000' + '문의',
     '주민번호 ' + '900101' + '-' + '1000000',
+    # Ordinary words or extensions next to an identifier are not digest evidence.
+    'Call ' + '010' + '-1234-' + '5678' + 'x123',
+    'RRN' + '900101' + '-' + '1000000',
+    'id ab' + '010' + '1234' + '5678',
 ])
 def test_state_validator_still_rejects_identifiers_next_to_text(value):
     with pytest.raises(ValueError):

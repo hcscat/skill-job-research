@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import subprocess
 from pathlib import Path
 import tempfile
@@ -61,9 +62,16 @@ class ReleaseTest(unittest.TestCase):
         )
         for relative in release_manifest["files"]:
             self.assertFalse(privacy_check.is_instruction_path(relative), relative)
+        # Ignored local guides may exist at any depth; only shared files must be free of them.
         skill = ROOT / "skills" / "job-research-match"
-        self.assertFalse(any(privacy_check.is_instruction_path(path.relative_to(ROOT).as_posix())
-                             for path in skill.rglob("*") if path.is_file()))
+        if (ROOT / ".git").exists() and shutil.which("git"):
+            listed = subprocess.run(["git", "ls-files", "-z", "--", skill.relative_to(ROOT).as_posix()],
+                                    cwd=ROOT, check=True, capture_output=True, text=True).stdout.split("\0")
+            shared = [relative for relative in listed if relative]
+        else:
+            shared = [path.relative_to(ROOT).as_posix() for path in skill.rglob("*") if path.is_file()]
+        self.assertTrue(shared)
+        self.assertFalse([relative for relative in shared if privacy_check.is_instruction_path(relative)])
 
     def test_nested_instruction_files_are_excluded_from_packages(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
