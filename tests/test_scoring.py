@@ -165,10 +165,10 @@ class ScoringTest(unittest.TestCase):
         self.assertTrue(any("excluded keywords" in reason for reason in result["excluded_reasons"]))
 
     def test_primary_role_is_ranked_before_secondary_role(self) -> None:
-        profile = {"strong_skills": ["Java"], "role_priority": {"primary": ["QA"]}}
+        profile = {"strong_skills": ["Java"], "role_priority": {"primary": ["Data Analyst"]}}
         primary = {
-            "title": "QA Engineer",
-            "role_family": "QA",
+            "title": "Data Analyst",
+            "role_family": "analytics",
             "active_status": "active",
             "evidence_quality": "detail-text",
             "skills": ["Java"],
@@ -184,7 +184,7 @@ class ScoringTest(unittest.TestCase):
         ranked = score_matches.rank_matches(profile, [secondary, primary])
 
         self.assertEqual(ranked[0]["role_priority"], 1)
-        self.assertEqual(ranked[0]["title"], "QA Engineer")
+        self.assertEqual(ranked[0]["title"], "Data Analyst")
 
     def test_recommendation_can_be_disabled_for_manual_review(self) -> None:
         profile = {**self.profile, "recommendation_minimum_score": None}

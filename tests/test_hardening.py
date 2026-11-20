@@ -15,7 +15,15 @@ import local_state
 import posting_status
 import privacy_check
 import wanted_status
+import score_matches
 import install_skill
+
+
+def test_role_alias_keys_are_case_insensitive():
+    p={'role_priority':{'primary':['Example Role'],'aliases':{'Example Role':['Sample Specialist']}}}
+    assert score_matches._role_priority(p,{},'sample specialist')==1
+    p['role_priority']['aliases']={' eXample   ROLE ':['Placeholder engineer']}
+    assert score_matches._role_priority(p,{},'placeholder engineer')==1
 
 
 @pytest.mark.parametrize('parts,label', [
@@ -51,6 +59,14 @@ def test_public_scanner_ignores_digit_runs_inside_hex_digests(text):
 ])
 def test_public_scanner_still_flags_identifiers_next_to_text(text,label):
     assert any(x[2]==label for x in privacy_check.scan_blob('sample.txt', text.encode()))
+
+
+def test_straddling_salary_range_keeps_confirmed_floor_policy():
+    profile={'target_roles':['Data Analyst'],'minimum_salary':100000,'hard_constraints':['minimum_salary']}
+    posting={'title':'Data Analyst','active_status':'active','evidence_quality':'detail-text','salary_min':90000,'salary_max':110000}
+    result=score_matches.score_match(profile,posting)
+    assert not result['storage_eligible']
+    assert 'salary is below the hard minimum' in result['excluded_reasons']
 
 
 @pytest.mark.parametrize("entries,expected", [

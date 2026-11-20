@@ -16,6 +16,8 @@ Apply gates before interpreting the score:
 
 ## Weighted Match
 
+Role-priority alias map keys are case- and whitespace-insensitive, matching the normalization of primary family names. Under a configured hard salary minimum, a disclosed lower bound below that minimum fails the gate even when the range's upper bound reaches it; do not silently interpret the upper bound as guaranteed compensation. A different overlap policy requires an explicit profile/policy decision.
+
 Score only profile categories the user actually supplied. Omitted profile categories do not reduce the score denominator.
 
 | Category | Weight | Measurement |
@@ -32,7 +34,7 @@ For each supplied category, compute `category_weight * matched_ratio`. Divide to
 ## Penalties And Caps
 
 - Each matched avoid keyword: subtract `10`, up to `30`.
-- Clear non-target role or stack mismatch: subtract `15..30`.
+- Role and stack mismatches reduce the corresponding weighted match; there is no separate automatic `15..30` mismatch penalty in `score_matches.py`.
 - Candidate below a strict minimum by more than two years: subtract `10` in addition to losing career-fit points.
 - Optional profile-supplied `required_qualification_penalties` apply only to separately verified mandatory criteria in `posting.required_qualifications`. Each rule supplies a name, positive integer points, and `term_groups`: every group must match at least one alternative within the same criterion. An optional `required_qualification_penalty_cap` limits their combined impact. Missing required-section evidence means no automatic penalty and an explicit caution; a title, broad page text, duties, or preferred criteria do not prove that a technology or experience is mandatory.
 - Evidence-quality caps are applied after penalties.
