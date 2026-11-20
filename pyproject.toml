@@ -15,3 +15,7 @@ dev = ["pytest>=8.0.0", "PyYAML>=6.0.0"]
 
 [tool.setuptools]
 packages = []
+
+[tool.pytest.ini_options]
+# Keep collection inside the shared suite; ignored local areas are never test sources.
+testpaths = ["tests"]
