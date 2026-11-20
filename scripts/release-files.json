@@ -20,6 +20,7 @@
     "docs/security-and-local-state.ko.md",
     "docs/security-and-local-state.md",
     "docs/specs/clone-ignore-safety-net/spec.md",
+    "docs/specs/collection-career-bounds/spec.md",
     "docs/specs/identifier-and-home-path-patterns/spec.md",
     "docs/specs/local-only-instruction-files/spec.md",
     "docs/specs/wanted-status-evidence/spec.md",
