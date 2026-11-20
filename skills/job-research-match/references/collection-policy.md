@@ -109,6 +109,8 @@ The same protocol applies to official APIs, feeds, company ATS pages, and job pl
 
 ### Wanted active-status resolution
 
+Use complete closure statements associated with the target posting, not deadline labels or conditional early-closure notices. Ignore hidden markup and identifiable unrelated/recommended posting containers. A genuine target closure statement still overrides a stale structured active flag; structured closed/hidden/expired evidence overrides an apply button. A mismatched structured posting identity must not become active through an unscoped button. HTML alone may not resolve CSS-driven visibility or ambiguous page structure; keep those cases unknown for rendered review.
+
 Wanted's visible `마감일: 상시채용` label is not a status signal: old and open postings can display the same label. For every Wanted detail page, parse the posting-scoped `__NEXT_DATA__.initialData.status` value (`active`/`open` versus `close`/`closed`). Reconcile it with hidden flags, `close_time`, and explicit visible closed messages before accepting an active flag. Closed evidence overrides stale active evidence. Disabled or hidden apply controls, scripts, and templates do not prove activity. A generic occurrence of `마감`, `상시채용`, or a stale search result must not change status. If neither a posting-scoped status nor an apply control is visible, record `active_status=unknown`, the evidence, and `last_verified_at`; never silently keep it as active.
 
 Use `scripts/posting_status.py` for deadline comparisons: a timestamp expires at that instant; a date-only deadline expires after that local calendar day. Keep an unparseable deadline unknown, never replace it with an invented date.
