@@ -42,6 +42,19 @@ presentation:
   row_shading: null
 
 source_profiles:
+  rallit:
+    enabled: null
+    collection_mode: deferred-permission-review
+    permission_reference: null
+    job_groups: []
+    jobs: []
+    career_buckets: []
+    broad_regions: []
+    tech_stacks: []
+    company_tags: []
+    joining_reward_only: null
+    canonical_url_pattern: "https://www.rallit.com/positions/<id>"
+    subway_query_supported: false
   groupby:
     enabled: null
     position_categories: []

@@ -18,9 +18,10 @@
 | 점핏 | 공개 상세 GET은 200 HTML, Next.js/RSC 및 dehydrated state | 접근 가능해도 게시·마감일이 과거일 수 있음 |
 | CATCH | 공개 상세 GET은 200 HTML, SSR 직렬화 객체와 상세 본문 | 종료 시각·종료 코드를 우선 확인 |
 | 그룹바이 | 공개 목록·상세 GET은 200 HTML, Next.js `__NEXT_DATA__`와 JSON-LD | 공개 개발자 API를 추정하지 않고 상세 `dueDate`와 화면 상태를 재확인 |
+| 랠릿 (후속 보충) | 공개 GET HTML의 Next.js 목록·상세 상태; 별도의 문서화된 파트너 API | 공개 접근은 재사용 허가가 아니며 웹 상태 객체와 파트너 상태 문자열을 구분 |
 | Work24 | 공식 API는 XML 목록/상세; 공개 상세 GET은 200 HTML 폼·표 | API 자격 없이 공개 상세로 확인할 때도 상태를 검증 |
 
-위 표의 상태 코드와 헤더는 2026-08-13 공개 GET 점검의 관찰값이다. 인증 세션의 요청·응답, 브라우저 네트워크 패널, 쿠키·인증 헤더는 범위에서 제외했다.
+위 표의 상태 코드와 헤더는 2026-08-13 공개 GET 점검의 관찰값이다. 인증 세션의 요청·응답, 브라우저 네트워크 패널, 쿠키·인증 헤더는 범위에서 제외했다. 랠릿 보충은 이후 조사이며 파일명의 원래 날짜에 조사한 것으로 소급하지 않는다.
 
 ## 사용자 프로필과의 결합 규칙
 
@@ -81,6 +82,17 @@
 - 문서화된 공개 개발자 API는 확인하지 못했다. 공개 HTML·Next.js 초기 데이터만 관찰 계약으로 기록하고 비공개 엔드포인트를 추정하거나 고정하지 않는다.
 
 ## 공식 기업/ATS, LinkedIn·Indeed, 프로그래머스
+
+### 랠릿 보충 (2026-10-11/12)
+
+- 상세 URL은 `https://www.rallit.com/positions/<id>`다. 일반 공개 HTML을 읽는 데 파트너 API가 기술적으로 필수인 것은 아니다.
+- 목록 SSR 경로는 `props.pageProps.dehydratedState.queries[*].state.data.data`며 `items`, `totalCount`, `totalPage`, `pageNumber`, `pageSize`를 제공한다.
+- 상세는 `props.pageProps.position`이며 웹의 `status.code`와 파트너 API의 문자열 `status`는 다른 구조다. `isAlwaysHiring`은 마감 상태나 유효한 종료 시각을 무효화하지 않는다.
+- 웹의 `keyword`, `jobGroup`, `job`, `jobLevel`, `addressRegion`은 UI/SSR 관찰 값이지 익명 개발자 API 계약이 아니다. 내장된 내부 endpoint를 우회 호출하지 않는다.
+- 대량 복사·저장은 허가 확인 전 보류한다. [원본 랠릿 참조](../../skills/job-research-match/references/rallit.md)의 공식 문서, 약관, 필터, 증거 한계와 허가 규칙을 따른다.
+- 개인 검색값·실제 공고 본문·계정 대상·성공한 인증 API/브라우저 행위를 이 보충에 기록하지 않는다.
+
+### 기타 소스
 
 - 공식 기업/ATS는 사이트별 HTML·JSON-LD·XML 계약이 다르므로 canonical URL, 업무·요건·지역·경력·마감·상태를 확인할 수 있을 때 우선한다. 로그인 전용이나 URL이 안정적이지 않은 경우 `manual-only`로 표시한다.
 - LinkedIn·Indeed는 공개 목록·검색 결과만 보조 근거로 사용하고, 로그인·지역 제한·재배포 조건이 있는 상세는 사용자 승인 없이 자동 수집하지 않는다.

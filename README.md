@@ -83,6 +83,7 @@ Markdown prose uses one physical line per paragraph or list item's prose, leavin
 - [Korean platform data-structure review (ancillary)](docs/research/platform-data-structures-20260813.ko.md)
 - [Shareable search settings template](config/job-search-settings.example.yaml)
 - [Skill entrypoint](skills/job-research-match/SKILL.md)
+- [Rallit source reference and permission gate](skills/job-research-match/references/rallit.md)
 
 ## Privacy Before Git
 
