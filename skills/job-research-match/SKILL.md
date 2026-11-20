@@ -18,6 +18,7 @@ description: Collect, verify, rank, track, and spreadsheet-deliver active job po
    - When no document is supplied, build the profile from the user's written industry, role, career, skills, location, work model, employment type, salary, and exclusion preferences.
    - Read `references/profile-input.md` before extracting or persisting a profile.
 4. Discover sources before collecting. Read `references/source-discovery.md` and reuse the repository field catalog when it is present.
+   - Before using Rallit, read `references/rallit.md` and resolve its collection-permission gate. Public page accessibility is not permission to bulk-copy postings.
    - The repository catalog is a public schema and transport reference only. It contains no candidate-specific search values or connector targets.
    - Read search keywords, role priorities, locations, station paths, career/salary limits, employment rules, and exclusion terms from the current authorized profile or live sheet immediately before execution.
    - For a live-sheet-backed run, validate the current-run snapshot with `scripts/collection_settings.py`; a saved profile alone is not evidence that the sheet was read. Refresh platform filter codes when values change.
@@ -90,6 +91,7 @@ When the task is only source or tool research, return a collection plan instead 
 - `references/profile-input.md`: tagged-document and text-fallback profile rules
 - `references/onboarding.md`: first-use intake and private local file creation
 - `references/source-discovery.md`: source selection and field inventory
+- `references/rallit.md`: observed Rallit filters, public payloads, partner API, and collection-permission gate
 - `references/tooling-strategy.md`: search, browser, scripts, and manual import choices
 - `references/collection-policy.md`: normalized posting schema and evidence rules
 - `scripts/wanted_status.py`: conservative Wanted detail-status parser with auditable evidence

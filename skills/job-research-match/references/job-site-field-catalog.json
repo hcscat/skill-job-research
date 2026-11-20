@@ -152,6 +152,34 @@
       "collection_notes": "Verify public /positions/<id> details and due/status evidence. Do not invent a station path or undocumented API."
     },
     {
+      "site_key": "rallit",
+      "site_name": "Rallit",
+      "priority": "manual-only",
+      "coverage": "deferred-permission-review",
+      "last_transport_review": "2026-10-11",
+      "transport": ["html", "next-data", "official-partner-api"],
+      "canonical_url_pattern": "https://www.rallit.com/positions/<id>",
+      "source_evidence": [
+        "https://www.rallit.com/",
+        "https://www.rallit.com/terms-of-service",
+        "https://inflab-1.gitbook.io/rallit/before-you-start/authorization",
+        "https://inflab-1.gitbook.io/rallit/from-rallit/position-api/api"
+      ],
+      "fields": [
+        {"key": "search_keywords", "label": "Company/posting keyword", "type": "free_text", "query_parameter": "keyword", "required": false},
+        {"key": "role_scope", "label": "Job group/job", "type": "single_select", "query_parameter": "jobGroup|job", "required": false},
+        {"key": "career", "label": "Career buckets", "type": "multi_select", "query_parameter": "jobLevel", "required": false},
+        {"key": "location", "label": "Broad region", "type": "multi_select", "query_parameter": "addressRegion", "required": false},
+        {"key": "skills", "label": "Tech stack", "type": "multi_select", "query_parameter": "jobSkillKeywords", "required": false},
+        {"key": "company_tags", "label": "Company tags", "type": "multi_select", "query_parameter": "runtime-ui", "required": false},
+        {"key": "joining_reward", "label": "Joining reward only", "type": "boolean", "query_parameter": "runtime-ui", "required": false},
+        {"key": "salary", "label": "Detail compensation", "type": "range", "source_field": "position.salaryType|minimumSalary", "required": false},
+        {"key": "status", "label": "Posting status", "type": "unknown", "source_field": "position.status.code|status", "required": false},
+        {"key": "deadline", "label": "Deadline", "type": "date", "source_field": "position.endedAt|isAlwaysHiring", "required": false}
+      ],
+      "collection_notes": "Read references/rallit.md. Public SSR observation is not permission for bulk storage. The documented partner API requires provider-issued Basic authentication; website query keys are not a public developer API. Refresh filters and verify detail addresses, duties and status after permission is established. No native station filter was observed."
+    },
+    {
       "site_key": "work24",
       "site_name": "Work24",
       "priority": "fallback",
