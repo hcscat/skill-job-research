@@ -37,6 +37,10 @@ collection:
   requested_result_limit: null
   active_status_policy: verify-detail
 
+presentation:
+  # Persist the user's authorized display policy privately, never personal defaults here.
+  row_shading: null
+
 source_profiles:
   groupby:
     enabled: null
