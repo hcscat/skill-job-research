@@ -13,6 +13,10 @@ This English document is the primary version. The `.ko.md` file is an ancillary 
 - Added on-demand research guidance
 - Added the privacy preflight scanner and release allow-list
 - Added public platform field/transport catalogs without candidate-specific values
+- Added bounded manual-status transfer plans, exact destination readback gates, optional company grouping, and current-run settings/status helpers
+- Registered Rallit's public filter/transport contract and permission gate; this is source research, not an implemented or authorized bulk collector
+
+These are source capabilities, not proof of a current installed version, live connector access, complete platform coverage, or successful external writes.
 
 ## Next evaluation stages
 

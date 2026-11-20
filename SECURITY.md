@@ -40,8 +40,8 @@ Run the privacy scanner and tests before publishing:
 ./.venv/bin/python -m pytest -q
 ```
 
-If personal information was committed previously, deleting it in a later commit does not remove it from Git history. Make the repository private, rotate exposed credentials, and prepare a clean history or a new repository before public release.
+If sensitive information was committed previously, a later deletion does not remove it from history. Report the affected scope without exposing values and prepare remediation. Credential exposure requires rotation; access changes, history rewriting, repository retirement, and force-pushing require the user's separate authorization. Do not treat every finding as a reason to replace the repository or erase otherwise safe history.
 
-After a history rewrite, verify every branch and tag and publish only the clean root. A hosting service may still serve an unreachable old object by its hash for some time; an ordinary push cannot guarantee that object is purged. Use the hosting service's sensitive-data removal/support procedure when hash-based access continues.
+After an authorized history rewrite, verify every affected branch and tag and publish only sanitized refs. A hosting service may still serve an unreachable old object by its hash for some time; an ordinary push cannot guarantee that object is purged. Use the hosting service's sensitive-data removal/support procedure when hash-based access continues.
 
 Use `./scripts/build_release.py` to create an allow-listed, privacy-checked source tree and deterministic ZIP without `.git`, local state, reports, or crawler data. Treat that clean directory as the preferred input for a new public repository.
