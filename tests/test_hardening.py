@@ -18,6 +18,41 @@ import wanted_status
 import install_skill
 
 
+@pytest.mark.parametrize('parts,label', [
+    (['010','0000','0000'],'phone number'),
+    (['900101','1000000'],'resident identifier'),
+])
+def test_public_scanner_rejects_contact_and_resident_patterns(parts,label):
+    assert any(x[2]==label for x in privacy_check.scan_blob('sample.txt','-'.join(parts).encode()))
+
+
+def test_public_scanner_keeps_generic_numbers():
+    assert not privacy_check.scan_blob('sample.txt',b'build 12345; score 83/100')
+
+
+# Digit runs inside hex digests (release manifests, commit IDs) are not contact data.
+@pytest.mark.parametrize('text', [
+    'sha256 3d4738cde55905a3c6db1d8ba151fb' + '983336' + '2174630' + 'a1eb11431ceb444870450',
+    'commit 9f' + '010' + '1234' + '5678' + 'abc4e2d1f0a9b8c7d6e5f4a3b2c1d0e9f8a7',
+    'event 1c2d4e5f-8a9b-4c1d-8e3f-' + '010' + '1234' + '5678' + 'a',
+])
+def test_public_scanner_ignores_digit_runs_inside_hex_digests(text):
+    assert not privacy_check.scan_blob('RELEASE-MANIFEST.json', text.encode())
+
+
+@pytest.mark.parametrize('text,label', [
+    ('주민번호' + '900101' + '1000000' + '입니다', 'resident identifier'),
+    ('tel:' + '010' + '-0000-' + '0000', 'phone number'),
+    ('(' + '900101' + '-' + '1000000' + ')', 'resident identifier'),
+    # Ordinary words or extensions next to an identifier are not digest evidence.
+    ('Call ' + '010' + '-1234-' + '5678' + 'x123', 'phone number'),
+    ('RRN' + '900101' + '-' + '1000000', 'resident identifier'),
+    ('id ab' + '010' + '1234' + '5678', 'phone number'),
+])
+def test_public_scanner_still_flags_identifiers_next_to_text(text,label):
+    assert any(x[2]==label for x in privacy_check.scan_blob('sample.txt', text.encode()))
+
+
 def test_staged_content_is_not_worktree_content(tmp_path):
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     file = tmp_path / "sample.txt"
@@ -172,6 +207,36 @@ def test_forcibly_tracked_generated_directory_is_scanned(tmp_path):
     (folder / "sample.txt").write_text("sample" + "@" + "private.invalid")
     subprocess.run(["git","add","data/sample.txt"],cwd=tmp_path,check=True)
     assert any(label=="email address" for _,_,label in privacy_check.scan(tmp_path,all_files=True))
+
+
+def test_checkout_scan_covers_unignored_files_but_not_an_ignored_local_area(tmp_path):
+    subprocess.run(["git","init","-q",str(tmp_path)],check=True)
+    (tmp_path / ".gitignore").write_text("/workspace/\n")
+    for folder in ("workspace", "notes"):
+        (tmp_path / folder).mkdir()
+        (tmp_path / folder / "sample.txt").write_text("sample" + "@" + "private.invalid")
+    scanned = {name for name,_,_ in privacy_check.scan(tmp_path,all_files=True)}
+    assert scanned == {"notes/sample.txt"}
+    # An ignore rule never hides a file that is already tracked.
+    subprocess.run(["git","add","-f","workspace/sample.txt"],cwd=tmp_path,check=True)
+    scanned = {name for name,_,_ in privacy_check.scan(tmp_path,all_files=True)}
+    assert scanned == {"notes/sample.txt", "workspace/sample.txt"}
+
+
+_U, _H, _W = '/' + 'Users/', '/' + 'home/', 'C:' + '\\Users\\'
+
+
+@pytest.mark.parametrize('text', [_U + 'sample', 'see ' + _H + 'sample.', "'" + _U + "sample'", _W + 'sample', _U + 'sample/jobs',
+                                  '|' + _U + 'sample/jobs|', '| ' + _H + 'sample |', '|' + _W + 'sample\\jobs|', '|' + _U + 'sample|'])
+def test_public_scanner_rejects_bare_and_nested_home_paths(text):
+    assert any(label == 'absolute user home path' for _, _, label in privacy_check.scan_blob('note.md', text.encode()))
+
+
+@pytest.mark.parametrize('text', ['https://example.com' + _U + 'sample/jobs', 'https://example.com' + _H + 'sample', 'r"(?:' + _U + '|' + _H + ')"',
+                                  _U + '|' + _H, 'r"[A-Za-z]:' + '\\\\' + 'Users' + '\\\\' + '[^\\\\]+"'])
+def test_public_scanner_ignores_url_segments_and_regex_source(text):
+    assert not any(label == 'absolute user home path' for _, _, label in privacy_check.scan_blob('note.md', text.encode()))
+
 
 @pytest.mark.parametrize('name', ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'state.sqlite3-journal', 'state.db-wal', 'run.log', 'storage-state.json', 'key.pem'])
 def test_shared_ignore_rules_cover_database_sidecars_and_credentials(name):

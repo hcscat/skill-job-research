@@ -60,11 +60,11 @@ MACOS_HOME_PREFIX = "/" + "Users/"
 LINUX_HOME_PREFIX = "/" + "home/"
 SENSITIVE_VALUE_PATTERNS = {
     "absolute user path": re.compile(
-        r"(?:^|[\\s'\"])(?:"
+        r"(?<![\w/:\\.-])(?:"
         + re.escape(MACOS_HOME_PREFIX)
         + r"|"
         + re.escape(LINUX_HOME_PREFIX)
-        + r")[^/\\s'\"]+(?:/|$)|[A-Za-z]:\\\\Users\\\\[^\\s'\"]+"
+        + r")[^/\s'\"\\]+(?=/|\s|['\"]|$)|(?<![\w/:\\.-])[A-Za-z]:\\Users\\[^\\\s'\"]+(?=\\|\s|['\"]|$)"
     ),
     "email address": re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE),
     "phone number": re.compile(r"(?<!\d)(?:\+82[-. ]?1[016789]|01[016789])[-. ]?\d{3,4}[-. ]?\d{4}(?!\d)"),

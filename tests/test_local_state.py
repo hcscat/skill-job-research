@@ -19,6 +19,29 @@ local_state = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(local_state)
 
 
+@pytest.mark.parametrize('value', [
+    '/' + 'Users/sample/private/file',
+    'See ' + '/' + 'Users/demo/private/file',
+    'C:' + '\\Users\\sample\\private\\file',
+    '/' + 'home/sample/private/file',
+])
+def test_sensitive_paths_are_rejected_in_any_sentence_position(value):
+    with pytest.raises(ValueError, match='unsafe'):
+        local_state._require_safe_state({'note':value})
+
+
+@pytest.mark.parametrize('prefix',['/'+'Users/','/'+'home/','C:'+'\\Users\\'])
+@pytest.mark.parametrize('suffix',[' ',"'",'"',''])
+def test_home_without_subdirectory_is_still_sensitive(prefix,suffix):
+    with pytest.raises(ValueError,match='unsafe'):
+        local_state._require_safe_state({'note':'See '+prefix+'sample'+suffix})
+
+
+@pytest.mark.parametrize('path',['/'+'Users/sample/jobs','/'+'home/sample/jobs'])
+def test_url_paths_are_not_local_user_directories(path):
+    local_state._require_safe_state({'url':'https://example.com'+path})
+
+
 class LocalStateTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
