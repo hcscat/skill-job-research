@@ -42,6 +42,8 @@ def readback(p):
 
 @pytest.mark.parametrize("current,legacy,expected", [
     ("지원완료", "마감", "applied"), ("", "지원", "applied"),
+    ("기지원 공고", "마감", "applied"), ("기지원", "", "applied"),
+    ("마감공고", "", "closed"),
     ("미지원-조건 확인", "", "dismissed"), ("", "마감", "closed"),
     ("", "", None), ("접수마감", "", None),
     ("지원완료 / legacy: 미지원", "", None), ("=A1", "", None),
@@ -103,6 +105,24 @@ def test_projection_must_preserve_key_and_status():
     assert plan([record()], projector=lambda *args: ("Role", "wrong", "Example board", "지원완료")).held
     p = plan([record()], projector=lambda *args: ("Role", "sample-a", "Example board", ""))
     assert p.held == ((2, "projection_loses_status"),)
+
+
+def test_title_substring_cannot_preserve_a_missing_status():
+    p=plan([record(status='지원')], projector=lambda *args: ('지원 담당자','sample-a','Example board',''))
+    assert p.held == ((2,'projection_loses_status'),)
+
+
+def test_literal_status_whitespace_is_preserved_without_false_hold():
+    p=plan([record(status=' 지원완료 ')])
+    assert len(p.moves)==1 and p.moves[0].target.values[-1]==' 지원완료 '
+
+
+def test_explicit_status_note_column_preserves_exact_status():
+    headers=('Title','ID','Source','Note')
+    p=m.plan_transfer(snapshot([record()]),{'applied':snapshot(headers=headers)}, {},
+        key_reader=read_key, status_columns={'applied':['Note']},
+        projector=lambda *args: ('Role','sample-a','Example board','지원완료'))
+    assert len(p.moves)==1
 
 
 def test_bad_schema_and_formula_fail_safely():
