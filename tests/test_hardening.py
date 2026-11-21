@@ -38,7 +38,8 @@ def test_manifest_does_not_glob_private_files(tmp_path, monkeypatch):
     (tmp_path / "search.local.json").write_text('{"search_keywords":["synthetic-only"]}')
     monkeypatch.setattr(build_release, "ROOT", tmp_path)
     assert build_release.allowed_files({"files": ["safe.txt"]}) == [tmp_path / "safe.txt"]
-    for name in ["../escape.txt", "search.local.json", "AGENTS.md"]:
+    for name in ["../escape.txt", "search.local.json", "AGENTS.md", "CLAUDE.md", "AGENTS.KO.md",
+                 ".claude/rules/x.md", ".agents/guides/x.md"]:
         with pytest.raises(ValueError):
             build_release.allowed_files({"files": [name]})
 

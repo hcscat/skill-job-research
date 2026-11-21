@@ -70,6 +70,16 @@ SENSITIVE_VALUE_PATTERNS = {
     "phone number": re.compile(r"(?<!\d)(?:\+82[-. ]?1[016789]|01[016789])[-. ]?\d{3,4}[-. ]?\d{4}(?!\d)"),
     "resident identifier": re.compile(r"(?<!\d)\d{6}[- ]?[1-4]\d{6}(?!\d)"),
 }
+# Only recognized UUIDs and long hex digests are exempt from the digit patterns;
+# an ordinary word or extension next to an identifier is not.
+HEX_TOKEN = re.compile(
+    r"\b(?:[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}|(?=[0-9A-Fa-f]*[A-Fa-f])[0-9A-Fa-f]{16,})\b"
+)
+DIGIT_PATTERN_LABELS = {"phone number", "resident identifier"}
+
+
+def mask_hex_tokens(text: str) -> str:
+    return HEX_TOKEN.sub(lambda match: "#" * len(match.group(0)), text)
 LOGIN_MODES = {"browser-session", "manual", "public-only"}
 DECISIONS = {"interested", "saved", "not_interested", "dismissed", "applied", "interview", "offer", "rejected"}
 
@@ -135,8 +145,9 @@ def _unsafe_state_paths(value: Any, prefix: str = "") -> list[str]:
         for index, child in enumerate(value):
             found.extend(_unsafe_state_paths(child, f"{prefix}[{index}]"))
     elif isinstance(value, str):
+        masked = mask_hex_tokens(value)
         for label, pattern in SENSITIVE_VALUE_PATTERNS.items():
-            if pattern.search(value):
+            if pattern.search(masked if label in DIGIT_PATTERN_LABELS else value):
                 found.append(f"{prefix or '<value>'} ({label})")
     return found
 

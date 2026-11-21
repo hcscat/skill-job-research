@@ -28,23 +28,42 @@ ALLOWED_EMAIL_DOMAINS = {"example.com", "users.noreply.github.com"}
 ALLOWED_COMMIT_NAMES = {"release bot", "github", "github actions", "dependabot[bot]"}
 GITHUB_HANDLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,38}$")
 SENSITIVE_NAME_PARTS = ("resume", "curriculum-vitae", "이력서", "경력기술서", "storage-state", "credentials")
-HISTORY_PRIVATE_NAMES = {"AGENTS.md", "AGENTS.override.md", "AGENTS.local.md"}
 HISTORY_PRIVATE_PARTS = (".local.", ".private.", "connector-targets", "storage-state", "credentials")
-# Content-review records only, not publication permission. Review before adding.
-PUBLIC_AGENT_GUIDE_SHA256 = frozenset({
-    "06dd1a11aa41d9dba73ad2a1652ad1f4f61e09e43bfe0f7a675dab940c0573d6",
-    "e82885dc7dbf69d7fd3d3cde2b98e92ee82f3054ebce0a2a5ee214e241d24abf",
-    "794bcaec0cc7104ca916633bc0428e77520ab91fc021de0dd0db0bde9df940f8",
+# AI instruction files and tool customization folders are local-only at every depth
+# (docs/specs/local-only-instruction-files/spec.md). Matching is case-insensitive.
+INSTRUCTION_FILE_NAMES = frozenset(name.casefold() for name in (
+    "AGENTS.md", "AGENTS.KO.md", "AGENTS.override.md", "AGENTS.override.KO.md", "AGENTS.local.md", ".agents.md",
+    "CLAUDE.md", "CLAUDE.KO.md", "CLAUDE.local.md", "GEMINI.md", "GEMINI.KO.md", "GEMINI.local.md",
+))
+PRIVATE_TOOL_DIRS = frozenset({".agents", ".agent", "_agents", "_agent", ".claude", ".codex", ".gemini"})
+# The root guide published before the local-only policy. History scans accept only
+# this exact copy so they pass without a rewrite; it never authorizes a new commit.
+HISTORICAL_PUBLISHED_GUIDE_SHA256 = frozenset({
     "916bcfac8f0a1b64c217affeacbec3fe70314f05f3a1cf6bebe77b0e14df465f",
 })
 
 
-def approved_public_guide(relative: str, content: bytes) -> bool:
-    return relative == "AGENTS.md" and hashlib.sha256(content).hexdigest() in PUBLIC_AGENT_GUIDE_SHA256
+def is_instruction_path(relative: str) -> bool:
+    # Normalize Windows separators; a tool folder name is never a valid public entry itself.
+    parts = [part.casefold() for part in relative.replace("\\", "/").split("/") if part not in {"", "."}]
+    return bool(parts) and (parts[-1] in INSTRUCTION_FILE_NAMES or bool(PRIVATE_TOOL_DIRS.intersection(parts)))
+
+
+def historical_published_guide(relative: str, content: bytes) -> bool:
+    return relative == "AGENTS.md" and hashlib.sha256(content).hexdigest() in HISTORICAL_PUBLISHED_GUIDE_SHA256
 
 
 def candidate_files(root: Path, all_files: bool = False) -> list[Path]:
-    if all_files or not (root / ".git").exists():
+    in_git = (root / ".git").exists()
+    if all_files and in_git:
+        # The publication surface of a checkout is every tracked file, even inside
+        # an ignored directory, plus every file Git does not ignore. Ignored
+        # local-only areas such as a private workspace are not candidates.
+        listed = _git(root, "ls-files", "--cached", "--others", "--exclude-standard", "-z").stdout
+        selected = {root / os.fsdecode(p) for p in listed.split(b"\0") if p}
+        return sorted(p for p in selected
+                      if (p.is_file() or p.is_symlink()) and p.relative_to(root).as_posix() not in SKIP_FILES)
+    if not in_git:
         excluded_parts = {".git", ".venv", "__pycache__", "data", "dist", "output", "reports", "tmp"}
         selected = set(
             path
@@ -54,9 +73,6 @@ def candidate_files(root: Path, all_files: bool = False) -> list[Path]:
             and path.suffix != ".pyc"
             and path.relative_to(root).as_posix() not in SKIP_FILES
         )
-        # Generated-directory exclusions must not hide forcibly tracked files.
-        if (root / ".git").exists():
-            selected.update(root / os.fsdecode(p) for p in _git(root, "ls-files", "-z").stdout.split(b"\0") if p)
         return sorted(p for p in selected if p.is_file() or p.is_symlink())
     result = subprocess.run(
         ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
@@ -95,8 +111,8 @@ def scan_blob(relative: str, data: bytes) -> list[tuple[str, int, str]]:
         findings.append((relative, 0, "sensitive filename"))
     if any(part in lower_name for part in HISTORY_PRIVATE_PARTS):
         findings.append((relative, 0, "private filename"))
-    if Path(relative).name in HISTORY_PRIVATE_NAMES and not approved_public_guide(relative, data):
-        findings.append((relative, 0, "unapproved instruction file"))
+    if is_instruction_path(relative):
+        findings.append((relative, 0, "local-only instruction file"))
     if len(data) > 2_000_000 or b"\0" in data:
         return findings + [(relative, 0, "unscanned binary or oversized content")]
     try:
@@ -169,15 +185,17 @@ def scan_git_history(root: Path) -> list[tuple[str, int, str]]:
         for relative in tree.splitlines():
             if relative in SKIP_FILES:
                 continue
-            name = Path(relative).name
             lower = relative.casefold()
             blob = _git(root, "show", f"{commit}:{relative}").stdout
-            if (name in HISTORY_PRIVATE_NAMES and not approved_public_guide(relative, blob)) or any(
+            accepted_guide = historical_published_guide(relative, blob)
+            if (is_instruction_path(relative) and not accepted_guide) or any(
                 part in lower for part in HISTORY_PRIVATE_PARTS
             ):
                 findings.add((f"{commit[:12]}:{relative}", 0, "private filename in Git history"))
                 continue
             for _, line, label in scan_blob(relative, blob):
+                if accepted_guide and label == "local-only instruction file":
+                    continue  # Content checks still apply to the accepted historical copy.
                 findings.add((f"{commit[:12]}:{relative}", line, label))
     return sorted(findings)
 

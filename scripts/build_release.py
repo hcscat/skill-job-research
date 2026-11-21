@@ -16,8 +16,14 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "scripts" / "release-files.json"
-EXCLUDED_NAMES = {".DS_Store", "AGENTS.md", "AGENTS.override.md", "AGENTS.local.md"}
-EXCLUDED_PARTS = {".git", ".venv", "__pycache__", "data", "dist", "output", "reports", "tmp"}
+EXCLUDED_NAMES = {".DS_Store"}
+EXCLUDED_PARTS = {".git", ".venv", "__pycache__", "data", "dist", "output", "reports", "tmp", "workspace"}
+# Same sets as scripts/privacy_check.py (tests assert equality); matched case-insensitively.
+INSTRUCTION_FILE_NAMES = frozenset(name.casefold() for name in (
+    "AGENTS.md", "AGENTS.KO.md", "AGENTS.override.md", "AGENTS.override.KO.md", "AGENTS.local.md", ".agents.md",
+    "CLAUDE.md", "CLAUDE.KO.md", "CLAUDE.local.md", "GEMINI.md", "GEMINI.KO.md", "GEMINI.local.md",
+))
+PRIVATE_TOOL_DIRS = frozenset({".agents", ".agent", "_agents", "_agent", ".claude", ".codex", ".gemini"})
 
 
 def sha256(path: Path) -> str:
@@ -49,7 +55,9 @@ def allowed_files(config: dict[str, object]) -> list[Path]:
         if relative.is_absolute() or ".." in relative.parts or "\\" in str(relative):
             raise ValueError("Release path must stay inside the source root")
         path = ROOT / relative
+        folded = [part.casefold() for part in relative.parts]
         if (EXCLUDED_PARTS.intersection(relative.parts) or path.name in EXCLUDED_NAMES
+                or (folded and folded[-1] in INSTRUCTION_FILE_NAMES) or PRIVATE_TOOL_DIRS.intersection(folded)
                 or any(part in str(relative).casefold() for part in (".local.", ".private."))
                 or any(p in {"private", "profiles", "credentials", "sessions"} for p in relative.parts)
                 or path.name.startswith(".env")):
