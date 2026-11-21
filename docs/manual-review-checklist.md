@@ -1,14 +1,12 @@
 # Manual review checklist
 
-This English document is the primary version. The `.ko.md` file is an ancillary
-Korean translation.
+This English document is the primary version. The `.ko.md` file is an ancillary Korean translation.
 
 ## Profile
 
 - Do the target role and industry match the current request?
 - Are total-career, core skills, and supporting skills represented correctly?
-- Do the allowed locations, work model, employment types, and compensation rules
-  match the current profile?
+- Do the allowed locations, work model, employment types, and compensation rules match the current profile?
 - Are excluded roles or terms neither too broad nor too narrow?
 
 ## Posting

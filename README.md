@@ -67,6 +67,8 @@ The clean directory and deterministic ZIP are written under `dist/`. For a new r
 
 ## Documentation
 
+Markdown prose uses one physical line per paragraph or list item's prose, leaving visual wrapping to the reader's editor or renderer. Do not hard-wrap sentences to a fixed column width. Keep blank paragraph separators, nested list structure, tables, fenced or indented code, and intentional hard breaks intact.
+
 - [Primary English matching policy](docs/matching-policy.md)
 - [Korean matching policy (ancillary)](docs/matching-policy.ko.md)
 - [Primary English security and local state](docs/security-and-local-state.md)
@@ -84,12 +86,9 @@ The clean directory and deterministic ZIP are written under `dist/`. For a new r
 
 ## Privacy Before Git
 
-Read [SECURITY.md](SECURITY.md) for shared development privacy guidance.
-AI agent instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, their override, local and translated variants) and tool folders (`.agents/`, `.claude/`, `.codex/`, `.gemini/`) are local-only at every depth, including the repository root. They are ignored, rejected by the privacy check and excluded from skill installations and release bundles. Keep your own agent guide locally; this repository does not ship one.
+Read [SECURITY.md](SECURITY.md) for shared development privacy guidance. AI agent instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, their override, local and translated variants) and tool folders (`.agents/`, `.claude/`, `.codex/`, `.gemini/`) are local-only at every depth, including the repository root. They are ignored, rejected by the privacy check and excluded from skill installations and release bundles. Keep your own agent guide locally; this repository does not ship one.
 
-Also run `scripts/privacy_check.py --staged` before committing: it scans the actual
-Git index, independently of working files. Release and installation manifests
-enumerate individual files; review the list when adding a new helper or test.
+Also run `scripts/privacy_check.py --staged` before committing: it scans the actual Git index, independently of working files. Release and installation manifests enumerate individual files; review the list when adding a new helper or test.
 
 Run `./scripts/privacy_check.py --all-files` before every commit or public release. Run `./scripts/privacy_check.py --git-history` before publishing a new or rewritten repository. Private instructions, user-specific settings, connector targets, personal documents, profiles, login sessions, reports, run outputs, and preference history must remain outside the public source. General runtime/security artifacts are ignored by default; individual document filenames are not pre-enumerated. For an authorized repository-local document or output, the agent must add safe ignore rules for the actual location and verify that the file is not already tracked or staged. See [runtime document Git protection](skills/job-research-match/references/local-state-security.md#runtime-document-git-protection).
 
