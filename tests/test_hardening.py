@@ -53,6 +53,42 @@ def test_public_scanner_still_flags_identifiers_next_to_text(text,label):
     assert any(x[2]==label for x in privacy_check.scan_blob('sample.txt', text.encode()))
 
 
+@pytest.mark.parametrize("entries,expected", [
+    ([{"type": "NEWBIE"}], (0, 0)),
+    ([{"type": "IRRELEVANT"}, {"type": "EXPERIENCED", "range": {"from": 12}}], (0, None)),
+    ([{"type": "NEWBIE"}, {"type": "EXPERIENCED", "range": {"from": 12}}], (0, None)),
+    ([{"type": "EXPERIENCED", "range": {"from": 2}}], (2, None)),
+    ([], (None, None)),
+])
+def test_explicit_career_alternatives(entries, expected):
+    assert collection_settings.career_bounds(entries=entries) == expected
+
+
+def test_career_text_is_not_an_experienced_only_gate():
+    assert collection_settings.career_bounds(minimum=12, text="경력무관") == (0, None)
+    assert collection_settings.career_bounds(minimum=12, text="신입·경력") == (0, None)
+    assert collection_settings.career_bounds(minimum=12, text="경력, 신입 제외") == (12, None)
+
+
+@pytest.mark.parametrize(('kwargs', 'expected'), [
+    ({'text': '신입·경력'}, (0, None)),
+    ({'text': '신입/경력'}, (0, None)),
+    ({'text': 'Entry-level or experienced'}, (0, None)),
+    ({'text': '신입·경력', 'maximum': 3}, (0, 3)),
+    ({'text': '신입'}, (0, 0)),
+    ({'text': 'Entry-level'}, (0, 0)),
+])
+def test_mixed_career_text_keeps_an_unknown_upper_bound(kwargs, expected):
+    assert collection_settings.career_bounds(**kwargs) == expected
+
+
+@pytest.mark.parametrize('text', ['경력 5년 이상 (신입 지원 불가)', '경력 5년 이상, 신입은 지원 불가', '경력 5년 이상 (신입 불가능)',
+                                  'Experienced only; no entry-level applicants', 'Entry-level applicants are not accepted',
+                                  'Not open to entry-level candidates', '5+ years, excluding newbies'])
+def test_negated_entry_level_text_keeps_the_minimum(text):
+    assert collection_settings.career_bounds(minimum=5, text=text) == (5, None)
+
+
 def test_staged_content_is_not_worktree_content(tmp_path):
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     file = tmp_path / "sample.txt"
@@ -159,6 +195,16 @@ def test_live_settings_freshness_and_no_user_defaults():
     with pytest.raises(ValueError,match="stale"):
         collection_settings.require_live_settings(doc,now=now)
     assert collection_settings.normalize_profile({}) == {}
+
+
+def test_offline_snapshot_retains_validation_without_a_network_age_limit():
+    now=datetime(2040,1,1,tzinfo=timezone.utc)
+    doc={'settings_source':'live-sheet','settings_verified_at':'2039-12-31T23:44:00+00:00','profile':{}}
+    assert collection_settings.require_live_settings(doc,now=now,maximum_age_seconds=None)=={}
+    with pytest.raises(ValueError,match='stale'):
+        collection_settings.require_live_settings(doc,now=now)
+    doc['settings_verified_at']='2041-01-01T00:00:00+00:00'
+    with pytest.raises(ValueError):collection_settings.require_live_settings(doc,now=now,maximum_age_seconds=None)
 
 
 def test_package_is_on_demand_only():
