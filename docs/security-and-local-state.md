@@ -36,4 +36,12 @@ When a repository-local execution area is required, use the ignored `workspace/j
 
 ## Public repository warning
 
-Deleting a file from the current branch does not erase personal data from existing Git history. Check every branch and tag, replace the public default branch with a clean root, and do not push archival refs. If the hosting service continues to serve an old object by its hash, use its sensitive-data removal/support procedure; an ordinary push cannot guarantee object purging.
+Deleting a file from the current branch does not erase personal data from existing Git history. Audit reachable branches and tags, then propose a scoped remedy if findings require one. Routine updates do not require a new root or repository; history rewriting, ref removal, and force-pushing need separate authorization. Do not publish archival refs containing sensitive data. If the hosting service continues to serve an old object by its hash, use its sensitive-data removal/support procedure; an ordinary push cannot guarantee object purging.
+
+## Instruction files and verification boundaries
+
+AI agent instruction files and tool folders are local-only at every depth (names in `docs/specs/local-only-instruction-files/spec.md`). Shared ignore rules cover them, and the privacy check rejects them in working files, index blobs and release trees regardless of content. Ignore rules do not untrack a file that is already tracked; untracking keeps the local copy and needs explicit authorization. History scans accept only the one root guide published before this policy. Release and installation manifests exclude instruction files independently of Git ignore rules.
+
+Audit working files, exact index blobs, reachable history, and generated package contents separately. Supplement pattern checks with manual template review and runtime-only private markers. Binary or oversized content is unresolved, not a clean result. A local audit does not inspect inaccessible remote objects, forks, cloud revision history, or unrelated private documents.
+
+The canonical source, installed skill, and private execution state are different artifacts. Report installed-version drift rather than implying a source edit already deployed it. Installation and live account writes are separate actions.
