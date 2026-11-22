@@ -142,8 +142,10 @@ def plan_transfer(source, destinations, mappings, *, key_reader, status_header="
         columns = (status_columns or {}).get(route, (status_header, legacy_header))
         status_values = [str(values[i]) for i, h in enumerate(target_headers) if h in columns]
         # Composite status cells use explicit separators, never title substrings.
+        # Split parts are compared literally so surrounding whitespace in an
+        # original status is neither required to vanish nor silently dropped.
         preserved = set(status_values)
-        preserved.update(part.strip() for value in status_values
+        preserved.update(part for value in status_values
                          for part in re.split(r' / (?:legacy: )?', value))
         if any(text not in preserved for text in status_texts):
             held.append((record.row, "projection_loses_status"))

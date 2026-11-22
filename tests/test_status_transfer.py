@@ -117,6 +117,23 @@ def test_literal_status_whitespace_is_preserved_without_false_hold():
     assert len(p.moves)==1 and p.moves[0].target.values[-1]==' 지원완료 '
 
 
+def _composite_plan(cell):
+    headers = ('지원여부', '확인', 'Source', 'ID', 'Title')
+    row = m.Record(2, (' 지원완료 ', '마감', 'Example board', 'sample-a', 'Example role'), m.posting_key('Example board', 'sample-a'))
+    return m.plan_transfer(snapshot([row], headers), {'applied': snapshot(headers=TARGET)}, {}, key_reader=read_key,
+                           projector=lambda *args: ('Example role', 'sample-a', 'Example board', cell))
+
+
+@pytest.mark.parametrize('cell', [' 지원완료  / 마감', ' 지원완료  / legacy: 마감'])
+def test_composite_status_keeps_literal_whitespace(cell):
+    p = _composite_plan(cell)
+    assert len(p.moves) == 1 and not p.held
+
+
+def test_composite_status_that_trims_the_original_is_held():
+    assert _composite_plan('지원완료 / 마감').held == ((2, 'projection_loses_status'),)
+
+
 def test_explicit_status_note_column_preserves_exact_status():
     headers=('Title','ID','Source','Note')
     p=m.plan_transfer(snapshot([record()]),{'applied':snapshot(headers=headers)}, {},
