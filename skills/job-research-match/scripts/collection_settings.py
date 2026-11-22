@@ -3,6 +3,16 @@ from copy import deepcopy
 from datetime import datetime, timezone
 import re
 
+NOVICE = re.compile(r"신입|entry[ -]level|newbies?", re.I)
+NOVICE_NEGATED = re.compile(
+    r"신입\s*(?:은|는|자)?\s*(?:지원\s*)?(?:불가|제외|안\s*됨)"
+    r"|\b(?:no|not(?:\s+open)?(?:\s+to)?|without|excluding)\s+(?:entry[ -]level|newbies?)"
+    r"|(?:entry[ -]level|newbies?)(?:\s+(?:applicants?|candidates?))?\s+(?:are\s+|is\s+)?"
+    r"(?:not\s+(?:accepted|eligible|considered|allowed)|excluded|ineligible)",
+    re.I,
+)
+EXPERIENCED_ALTERNATIVE = re.compile(r"경력|experienced", re.I)
+
 
 def career_bounds(*, minimum=None, maximum=None, text="", entries=()):
     """Keep novice/irrelevant alternatives instead of forcing experienced-only bounds.
@@ -42,9 +52,14 @@ def career_bounds(*, minimum=None, maximum=None, text="", entries=()):
         highs.append(float(maximum))
     elif minimum is not None:
         opened = True
-    if re.search(r"신입|entry[ -]level|newbie", text, re.I) and not re.search(r"신입\s*(?:불가|제외)", text):
+    # A negated mention ("신입 지원 불가", "no entry-level applicants") offers no
+    # alternative, so it never lowers the minimum.
+    offered = NOVICE_NEGATED.sub(" ", text)
+    if NOVICE.search(offered):
         lows.append(0)
-        if not lows[:-1]:
+        # Entry-level alone is a zero-year range; mixed text such as 신입·경력
+        # discloses no maximum, so the upper bound stays unknown.
+        if not lows[:-1] and not EXPERIENCED_ALTERNATIVE.search(offered):
             highs.append(0)
     return (min(lows) if lows else None, None if opened else (max(highs) if highs else None))
 
