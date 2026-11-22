@@ -15,7 +15,7 @@ Use this reference only when the user asks to write job-search results to a spre
 
 Before collecting new postings, inspect the collection sheet's `지원여부` and optional legacy `확인` columns and the destination-tab schemas. Resolve columns by live header name, never a fixed letter or offset. Do not recreate removed columns. Treat these manual values as an explicit queue:
 
-1. If `지원여부` confirms an application (for example `지원완료`), move the row to `지원공고`.
+1. If `지원여부` confirms an application (for example `지원완료`, `기지원`, or `기지원 공고`), move the row to `지원공고`.
 2. Otherwise, if either status column is `마감`, move it to `마감공고`.
 3. Otherwise, if either status column is `미지원` or an annotated form such as `미지원-맞지않음`, move it to `미지원공고`.
 4. A standalone `지원` in either available status column also moves to `지원공고`.
@@ -25,6 +25,8 @@ Application confirmation takes precedence over a later closed label when both ap
 If a destination has been removed or is unavailable, hold those source rows and report the missing route. Do not recreate a closed-postings tab or infer deletion permission. Compound or unrecognized labels require review, not substring routing.
 
 ### Bounded row-transfer execution
+
+Status preservation is checked in destination status fields, not by finding a substring in a title or another arbitrary cell. `plan_transfer` uses the configured current/legacy status headers by default. For a legacy schema without those fields, pass `status_columns={route: [actual_destination_header]}` explicitly. Store the exact status text or explicit ` / `-separated statuses there; a missing status field holds the row and blocks source deletion. This does not authorize creating a column or guessing a legacy notes mapping.
 
 Use `scripts/status_transfer.py` for repeatable planning and verification. It is an offline helper, not a connector or a job collector. Keep its inputs and plans in task memory; never put live sheet rows or connector targets into public files.
 

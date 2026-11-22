@@ -24,6 +24,7 @@
     "docs/specs/identifier-and-home-path-patterns/spec.md",
     "docs/specs/local-only-instruction-files/spec.md",
     "docs/specs/role-alias-and-salary-floor/spec.md",
+    "docs/specs/status-transfer-columns/spec.md",
     "docs/specs/wanted-status-evidence/spec.md",
     "pyproject.toml",
     "scripts/build_release.py",

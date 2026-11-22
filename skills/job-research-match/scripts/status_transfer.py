@@ -6,6 +6,7 @@ All row numbers are physical, one-based worksheet rows, including hidden rows.
 
 from collections import Counter
 from dataclasses import dataclass
+import re
 
 
 @dataclass(frozen=True)
@@ -53,12 +54,12 @@ def posting_key(source, posting_id=None, canonical_url=None):
 def route_status(current, legacy=""):
     """Keep ambiguous compound labels in place; preserve original cell text."""
     current, legacy = (str(v or "").strip() for v in (current, legacy))
-    if current == "지원완료":
+    if current in {"지원완료", "기지원", "기지원 공고"}:
         return "applied"
     values = (current, legacy)
     if any(v.startswith("=") or " / legacy: " in v for v in values):
         return None
-    if "마감" in values:
+    if any(v in {"마감", "마감공고"} for v in values):
         return "closed"
     if any(v == "미지원" or v.startswith("미지원-") for v in values):
         return "dismissed"
@@ -88,7 +89,7 @@ def map_values(headers, values, destination_headers, mapping):
 
 
 def plan_transfer(source, destinations, mappings, *, key_reader, status_header="지원여부",
-                  legacy_header="확인", projector=None):
+                  legacy_header="확인", projector=None, status_columns=None):
     """Plan appends or exact existing-row reuse, holding conflicting duplicates.
 
     destinations is keyed by applied/dismissed/closed. Missing routes are held.
@@ -138,7 +139,15 @@ def plan_transfer(source, destinations, mappings, *, key_reader, status_header="
             held.append((record.row, "projection_loses_identity"))
             continue
         status_texts = [str(v) for v in (current, legacy) if str(v or "").strip()]
-        if any(not any(text in str(value) for value in values) for text in status_texts):
+        columns = (status_columns or {}).get(route, (status_header, legacy_header))
+        status_values = [str(values[i]) for i, h in enumerate(target_headers) if h in columns]
+        # Composite status cells use explicit separators, never title substrings.
+        # Split parts are compared literally so surrounding whitespace in an
+        # original status is neither required to vanish nor silently dropped.
+        preserved = set(status_values)
+        preserved.update(part for value in status_values
+                         for part in re.split(r' / (?:legacy: )?', value))
+        if any(text not in preserved for text in status_texts):
             held.append((record.row, "projection_loses_status"))
             continue
         matches = index.get(record.key, [])
