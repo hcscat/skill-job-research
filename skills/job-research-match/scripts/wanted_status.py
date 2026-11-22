@@ -23,10 +23,8 @@ _EXPLICIT_CLOSED = (
     "해당 포지션은 마감되었습니다",
     "지원이 마감되었습니다",
     "채용이 마감되었습니다",
-    "채용 마감",
     "모집이 마감되었습니다",
     "현재는 지원할 수 없습니다",
-    "모집 완료",
 )
 
 
@@ -42,6 +40,13 @@ class _VisibleEvidence(HTMLParser):
         attrs = dict(attrs)
         hidden = (tag in {"script", "style", "template"} or "hidden" in attrs
                   or attrs.get("aria-hidden") == "true"
+                  # Wanted renders the target application area (apply control and
+                  # closure guide) inside <aside> on desktop and <footer> on narrow
+                  # layouts, so only site navigation is excluded by tag; other
+                  # postings are excluded by their related/recommend markers.
+                  or tag == "nav"
+                  or bool(re.search(r"display\s*:\s*none|visibility\s*:\s*hidden", attrs.get("style", ""), re.I))
+                  or bool(re.search(r"related|recommend|other[-_ ]?(?:job|position)", attrs.get("class", "") + " " + attrs.get("id", ""), re.I))
                   or bool(self.stack and self.stack[-1][1]))
         disabled = ("disabled" in attrs or attrs.get("aria-disabled") == "true"
                     or bool(self.stack and self.stack[-1][2]))
@@ -116,7 +121,9 @@ def classify_wanted_status(
     visible = _VisibleEvidence()
     visible.feed(html)
     compact = re.sub(r"\s+", " ", " ".join(visible.text)).strip()
-    raw_status = str((posting or {}).get("status") or "").strip().lower()
+    if data and posting is None:
+        return {"active_status": "unknown", "status_evidence": ["structured-posting-identity-unresolved"],
+                "method": "wanted-detail-text"}
     # Negative evidence wins over an old active flag or an enabled button.
     for phrase in _EXPLICIT_CLOSED:
         if phrase in compact:
@@ -137,10 +144,6 @@ def classify_wanted_status(
             evidence.append(f"__NEXT_DATA__.status={raw_status}")
             return {"active_status": "active", "status_evidence": evidence, "method": "wanted-next-data"}
 
-    for phrase in _EXPLICIT_CLOSED:
-        if phrase in compact:
-            evidence.append(f"visible={phrase}")
-            return {"active_status": "closed", "status_evidence": evidence, "method": "wanted-detail-text"}
     if visible.apply:
         evidence.append("visible=apply-control")
         return {"active_status": "active", "status_evidence": evidence, "method": "wanted-detail-text"}
