@@ -59,12 +59,17 @@ FORBIDDEN_STATE_KEYS = PERSONAL_PROFILE_KEYS | {
 MACOS_HOME_PREFIX = "/" + "Users/"
 LINUX_HOME_PREFIX = "/" + "home/"
 SENSITIVE_VALUE_PATTERNS = {
+    # Same left-context rule as scripts/privacy_check.py: a home path counts unless an
+    # ASCII path or host character comes right before it, and also after a non-web
+    # scheme:// or a glued short option, optionally followed by a known local root. Web URL
+    # spans are masked first (URL_SPAN), so a URL path segment is not a local user
+    # directory.
     "absolute user path": re.compile(
-        r"(?<![\w/:\\.-])(?:"
-        + re.escape(MACOS_HOME_PREFIX)
-        + r"|"
-        + re.escape(LINUX_HOME_PREFIX)
-        + r")[^/\s'\"\\]+(?=/|\s|['\"]|$)|(?<![\w/:\\.-])[A-Za-z]:\\Users\\[^\\\s'\"]+(?=\\|\s|['\"]|$)"
+        r"(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}://[^\s/?#<>'\"`|\\]*"
+        r"|(?<![^\s'\"`=(,;{\[])(?:-i[a-z]{2,12}|-[A-Za-z])|(?<![A-Za-z0-9_/\\.-]))"
+        r"(?:/mnt/[A-Za-z]|/cygdrive/[A-Za-z]|/[A-Za-z](?=/Users/)|/System/Volumes/Data|/host_mnt)?"
+        r"(?:" + re.escape(MACOS_HOME_PREFIX) + r"|" + re.escape(LINUX_HOME_PREFIX) + r")[^/\s'\"\\]+(?=/|\s|['\"]|$)"
+        r"|(?:(?<![^\s'\"`=(,;{\[])(?:-i[a-z]{2,12}|/F[A-Za-z]|[-/][A-Za-z])|(?<![A-Za-z0-9_]))[A-Za-z]:\\Users\\[^\\\s'\"]+(?=\\|\s|['\"]|$)"
     ),
     "email address": re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE),
     "phone number": re.compile(r"(?<!\d)(?:\+82[-. ]?1[016789]|01[016789])[-. ]?\d{3,4}[-. ]?\d{4}(?!\d)"),
@@ -76,10 +81,26 @@ HEX_TOKEN = re.compile(
     r"\b(?:[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}|(?=[0-9A-Fa-f]*[A-Fa-f])[0-9A-Fa-f]{16,})\b"
 )
 DIGIT_PATTERN_LABELS = {"phone number", "resident identifier"}
+# The host, path and fragment of a web URL (http or https to a non-loopback host, or
+# a standalone www. host) are masked before the home-path check. Other schemes,
+# loopback or local-bind URLs, query values, key=value fragments, Windows drive paths
+# and text after a delimiter such as , ; ) are still checked (same rule as
+# scripts/privacy_check.py).
+URL_SPAN = re.compile(
+    r"(?i)(?:(?<![A-Za-z0-9+.-])https?://(?>(?:[\w.%:-]*@)?)"
+    r"(?!(?:(?:[\w-]+\.)*localhost(?:\.localdomain)?|127(?:\.\d+){1,3}|0\.0\.0\.0|\[[0:]*(?:1|ffff:127[\d.]*)?\])(?![\w.-]))"
+    r"(?:\[[0-9a-f:.]+\]|[\w.-]+)|(?<![A-Za-z0-9_@+/:.\\-])www\.[\w.-]+)"
+    r"(?::\d+)?(?:[/#](?:(?![A-Za-z]:\\)[\w\-.~/#\[\]@%:!$*+])*)?"
+)
+HOME_PATH_LABEL = "absolute user path"
 
 
 def mask_hex_tokens(text: str) -> str:
     return HEX_TOKEN.sub(lambda match: "#" * len(match.group(0)), text)
+
+
+def mask_url_spans(text: str) -> str:
+    return URL_SPAN.sub(lambda match: " " * len(match.group(0)), text)
 LOGIN_MODES = {"browser-session", "manual", "public-only"}
 DECISIONS = {"interested", "saved", "not_interested", "dismissed", "applied", "interview", "offer", "rejected"}
 
@@ -146,8 +167,10 @@ def _unsafe_state_paths(value: Any, prefix: str = "") -> list[str]:
             found.extend(_unsafe_state_paths(child, f"{prefix}[{index}]"))
     elif isinstance(value, str):
         masked = mask_hex_tokens(value)
+        url_masked = mask_url_spans(value)
         for label, pattern in SENSITIVE_VALUE_PATTERNS.items():
-            if pattern.search(masked if label in DIGIT_PATTERN_LABELS else value):
+            target = masked if label in DIGIT_PATTERN_LABELS else url_masked if label == HOME_PATH_LABEL else value
+            if pattern.search(target):
                 found.append(f"{prefix or '<value>'} ({label})")
     return found
 

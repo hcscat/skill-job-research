@@ -17,12 +17,21 @@ KNOWN_PRIVATE_MARKERS = tuple(
     if marker.strip()
 )
 PATTERNS = {
-    # A bare home directory counts, while a URL path segment such as
-    # https://host/Users/x does not. The account name must start with a word
-    # character, so regex source like an alternation of home prefixes is not a path.
+    # A home directory counts unless an ASCII path or host character comes right
+    # before it, so a relative import or route such as ../home/x or app/views/home/x
+    # is not a home path. It also counts after a non-web scheme:// (file:, ssh:,
+    # editor or loopback URLs) or a glued short option such as -I, -F, -C, -isystem
+    # or, before a drive path, MSVC /I or /Fo, optionally followed by a known local
+    # root (WSL, Cygwin, Git Bash before Users, macOS data volume, Docker Desktop). Web URL spans are masked before this runs
+    # (URL_SPAN), so https://host/Users/x is not a path. The account name must start
+    # with a word character, so regex source like an alternation of home prefixes is
+    # not a path.
     "absolute user home path": re.compile(
-        r"(?<![\w/:\\.-])(?:/Users/|/home/)[\w.-][^/\s<>'\"\\]*(?=/|\s|['\"<>|]|$)"
-        r"|(?<![\w/:\\.-])[A-Za-z]:\\Users\\[\w.-][^\\\s<>'\"]*(?=\\|\s|['\"<>|]|$)"
+        r"(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}://[^\s/?#<>'\"`|\\]*"
+        r"|(?<![^\s'\"`=(,;{\[])(?:-i[a-z]{2,12}|-[A-Za-z])|(?<![A-Za-z0-9_/\\.-]))"
+        r"(?:/mnt/[A-Za-z]|/cygdrive/[A-Za-z]|/[A-Za-z](?=/Users/)|/System/Volumes/Data|/host_mnt)?"
+        r"(?:/Users/|/home/)[\w.-][^/\s<>'\"\\]*(?=/|\s|['\"<>|]|$)"
+        r"|(?:(?<![^\s'\"`=(,;{\[])(?:-i[a-z]{2,12}|/F[A-Za-z]|[-/][A-Za-z])|(?<![A-Za-z0-9_]))[A-Za-z]:\\Users\\[\w.-][^\\\s<>'\"]*(?=\\|\s|['\"<>|]|$)"
     ),
     "email address": re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE),
     "phone number": re.compile(r"(?<!\d)(?:\+82[-. ]?1[016789]|01[016789])[-. ]?\d{3,4}[-. ]?\d{4}(?!\d)"),
@@ -38,6 +47,20 @@ HEX_TOKEN = re.compile(
     r"\b(?:[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}|(?=[0-9A-Fa-f]*[A-Fa-f])[0-9A-Fa-f]{16,})\b"
 )
 DIGIT_PATTERN_LABELS = {"phone number", "resident identifier"}
+# The host, path and fragment of a web URL (http or https to a non-loopback host, or
+# a standalone www. host) are masked before the home-path check. Other schemes such
+# as file:, ssh: or editor links, loopback or local-bind URLs and scp-style host:
+# paths can carry a local or account path and stay checked. The span holds only host
+# and path characters and stops at a query, a key=value fragment, a Windows drive
+# path and delimiters such as , ; ) so a home path there or in the next field is
+# still reported.
+URL_SPAN = re.compile(
+    r"(?i)(?:(?<![A-Za-z0-9+.-])https?://(?>(?:[\w.%:-]*@)?)"
+    r"(?!(?:(?:[\w-]+\.)*localhost(?:\.localdomain)?|127(?:\.\d+){1,3}|0\.0\.0\.0|\[[0:]*(?:1|ffff:127[\d.]*)?\])(?![\w.-]))"
+    r"(?:\[[0-9a-f:.]+\]|[\w.-]+)|(?<![A-Za-z0-9_@+/:.\\-])www\.[\w.-]+)"
+    r"(?::\d+)?(?:[/#](?:(?![A-Za-z]:\\)[\w\-.~/#\[\]@%:!$*+])*)?"
+)
+HOME_PATH_LABEL = "absolute user home path"
 ALLOWED_EMAIL_DOMAINS = {"example.com", "users.noreply.github.com"}
 ALLOWED_COMMIT_NAMES = {"release bot", "github", "github actions", "dependabot[bot]"}
 GITHUB_HANDLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,38}$")
@@ -138,8 +161,10 @@ def scan_blob(relative: str, data: bytes) -> list[tuple[str, int, str]]:
         if any(marker in lowered for marker in KNOWN_PRIVATE_MARKERS):
             findings.append((relative, line_number, "known private marker"))
         masked = HEX_TOKEN.sub(lambda match: "#" * len(match.group(0)), line)
+        url_masked = URL_SPAN.sub(lambda match: " " * len(match.group(0)), line)
         for label, pattern in PATTERNS.items():
-            for match in pattern.finditer(masked if label in DIGIT_PATTERN_LABELS else line):
+            target = masked if label in DIGIT_PATTERN_LABELS else url_masked if label == HOME_PATH_LABEL else line
+            for match in pattern.finditer(target):
                 if label == "absolute user home path" and match.group(0) in {"/" + "Users/|/", "/" + "Users/|"}:
                     continue  # Regex source, not a user path (including old scanner commits).
                 if label == "email address":

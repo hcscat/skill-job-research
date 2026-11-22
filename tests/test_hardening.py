@@ -232,8 +232,40 @@ def test_public_scanner_rejects_bare_and_nested_home_paths(text):
     assert any(label == 'absolute user home path' for _, _, label in privacy_check.scan_blob('note.md', text.encode()))
 
 
+# A label colon, a file, ssh, editor or loopback URL, a forward-slash drive path, a
+# known local root, a glued short option, a query or key=value fragment value, the
+# next CSV field or attached non-ASCII prose never exempts a home path.
+@pytest.mark.parametrize('text', ['Location:' + _U + 'sample/private/report.txt', 'Location:' + _W + 'sample\\private\\report.txt',
+                                  'path:' + _H + 'sample', 'file://' + _U + 'sample/report.txt', 'file:' + _U + 'sample/report.txt',
+                                  'FILE://localhost' + _U + 'sample/report.txt', 'file:///C:' + _U + 'sample/report.txt',
+                                  'C:' + _U + 'sample/report.txt', 'host:' + _H + 'sample/report.txt', '경로' + _U + 'sample/report.txt',
+                                  '/mnt/c' + _U + 'sample/x', '-I' + _U + 'sample/include', 'gcc -I/mnt/c' + _U + 'sample/inc', 'clang -F' + _U + 'sample/Library/x -c a.m',
+                                  'cc -isystem' + _U + 'sample/inc x.c', 'tar -C' + _H + 'sample/x -xf a.tar', 'cl.exe /I' + _W + 'sample\\include main.c',
+                                  'file:///mnt/c' + _U + 'sample/x', 'vscode-remote://wsl+Ubuntu/mnt/c' + _U + 'sample/project/app.py',
+                                  'Add `-I' + _U + 'sample/include` to CFLAGS', 'Use `/I' + _W + 'sample\\include`', 'CMAKE_FLAGS=-I/a;-I' + _U + 'sample/inc',
+                                  'cl /c main.c /Fo' + _W + 'sample\\build\\main.obj', '-isysroot' + _U + 'sample/sdk',
+                                  'file:///' + _W + 'sample\\x', '\\\\?\\' + _W + 'sample\\x', 'https://example.com/jobs?path=' + _U + 'sample/x',
+                                  'vscode://file' + _U + 'sample/project', 'ssh://host' + _H + 'sample/repo',
+                                  'Backend,Acme,https://jobs.example/p/1,open,' + _U + 'sample/Documents/cv.pdf', 'https://jobs.example/1,' + _W + 'sample\\cv.pdf',
+                                  '[docs](https://docs.example)' + _U + 'sample/x', 'https://viewer.example/#file=' + _U + 'sample/cv.pdf',
+                                  'rsync -a build/ www.example.com:' + _H + 'sample/public_html', 'sftp://www.example.com' + _H + 'sample/upload',
+                                  _W + 'www.sample\\Documents', 'http://localhost:8000' + _U + 'sample/project/index.html',
+                                  'http://0.0.0.0:8000' + _U + 'sample/x', 'http://[::]:8000' + _U + 'sample/x', 'http://sample@localhost:8000' + _U + 'sample/x',
+                                  'Open https://jobs.example/p/1#' + _W + 'sample\\cv.pdf', 'https://x.example/' + _W + 'sample\\x',
+                                  '/cygdrive/c' + _U + 'sample/x', '/c' + _U + 'sample/x', '/System/Volumes/Data' + _U + 'sample/x'])
+def test_public_scanner_rejects_home_paths_in_any_local_context(text):
+    assert any(label == 'absolute user home path' for _, _, label in privacy_check.scan_blob('note.md', text.encode()))
+
+
 @pytest.mark.parametrize('text', ['https://example.com' + _U + 'sample/jobs', 'https://example.com' + _H + 'sample', 'r"(?:' + _U + '|' + _H + ')"',
-                                  _U + '|' + _H, 'r"[A-Za-z]:' + '\\\\' + 'Users' + '\\\\' + '[^\\\\]+"'])
+                                  _U + '|' + _H, 'r"[A-Za-z]:' + '\\\\' + 'Users' + '\\\\' + '[^\\\\]+"',
+                                  'https://example.com:8080' + _U + 'sample', 'https://example.com/a' + _H + 'sample', 'see https://example.com' + _U + 'x.',
+                                  'https://[2001:db8::1]' + _U + 'sample/x', 'https://example.com/채용' + _H + 'sample', 'https://example.com/a:' + _H + 'sample',
+                                  'https://app.example.com/#' + _H + 'dashboard', 'www.example.com' + _U + 'sample', '(https://example.com' + _U + 'sample)',
+                                  '공고https://careers.example.com' + _H + 'jobs', 'see src/app' + _H + 'page.tsx', 'GET /api/v1' + _H + 'feed',
+                                  'see src/views' + _H + 'components/Hero.vue', 'GET /api/v2' + _U + '123/roles', 'AWS IAM Roles' + _U + 'Groups/Policies',
+                                  "import HomePage from '.." + _H + "HomePage'", "import api from '../.." + _H + "api'", 'see ..' + _H + 'README.md',
+                                  'GET /m' + _H + 'feed', '<a href="/u' + _H + 'settings">', "app.get('/u" + _H + "feed')", '| /p' + _H + 'x |'])
 def test_public_scanner_ignores_url_segments_and_regex_source(text):
     assert not any(label == 'absolute user home path' for _, _, label in privacy_check.scan_blob('note.md', text.encode()))
 
