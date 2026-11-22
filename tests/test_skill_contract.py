@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 import tempfile
@@ -124,6 +125,39 @@ class SkillContractTest(unittest.TestCase):
         self.assertNotIn("avoid_keywords:", example)
         self.assertNotIn("common_values", catalog)
         self.assertNotIn("values_ref", catalog)
+
+    def test_rallit_contract_keeps_permission_and_runtime_values_separate(self) -> None:
+        catalog = json.loads((SKILL / "references/job-site-field-catalog.json").read_text(encoding="utf-8"))
+        site = next(item for item in catalog["sites"] if item["site_key"] == "rallit")
+        self.assertEqual(site["priority"], "manual-only")
+        self.assertEqual(site["coverage"], "deferred-permission-review")
+        self.assertEqual(site["canonical_url_pattern"], "https://www.rallit.com/positions/<id>")
+        self.assertTrue(all("accepted_values" not in field and "default" not in field for field in site["fields"]))
+        keyword = next(field for field in site["fields"] if field["key"] == "search_keywords")
+        self.assertEqual(keyword["query_parameter"], "keyword")
+        reference = (SKILL / "references/rallit.md").read_text(encoding="utf-8")
+        for signal in ("Collection permission gate", "Basic authentication", "totalPage", "basicQualifications", "isAlwaysHiring", "CLOSED", "unknown"):
+            self.assertIn(signal, reference)
+        self.assertIn("references/rallit.md", (SKILL / "SKILL.md").read_text(encoding="utf-8"))
+        manifest = json.loads((ROOT / "scripts/release-files.json").read_text(encoding="utf-8"))
+        self.assertIn("skills/job-research-match/references/rallit.md", manifest["files"])
+        example = yaml.safe_load((ROOT / "config/job-search-settings.example.yaml").read_text(encoding="utf-8"))["source_profiles"]["rallit"]
+        self.assertIsNone(example["enabled"])
+        self.assertEqual(example["collection_mode"], "deferred-permission-review")
+        self.assertEqual(example["jobs"], [])
+        self.assertEqual(example["broad_regions"], [])
+
+    def test_public_catalog_views_cover_the_same_source_keys(self) -> None:
+        canonical = json.loads((SKILL / "references/job-site-field-catalog.json").read_text(encoding="utf-8"))
+        research = json.loads((ROOT / "docs/research/job-site-field-catalog-20260709.json").read_text(encoding="utf-8"))
+        canonical_keys = [site["site_key"] for site in canonical["sites"]]
+        research_keys = [site["site_key"] for site in research["sites"]]
+        self.assertEqual(len(canonical_keys), len(set(canonical_keys)))
+        self.assertEqual(len(research_keys), len(set(research_keys)))
+        self.assertEqual(set(canonical_keys), set(research_keys))
+        reference = (ROOT / "docs/research" / "../../skills/job-research-match/references/rallit.md").resolve()
+        self.assertEqual(reference, SKILL / "references/rallit.md")
+        self.assertTrue(reference.is_file())
 
     def test_collection_is_exhaustive_by_default(self) -> None:
         skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8").casefold()

@@ -18,9 +18,10 @@ The normalized posting keys are `source`, `posting_id`, `canonical_url`, `title`
 | Jumpit | Detail `GET` HTML with Next.js/RSC and dehydrated state | A reachable page can still be stale |
 | CATCH | Detail `GET` HTML with SSR serialized objects and detail body | Prefer end timestamp/code for status |
 | Groupby | Public list/detail `GET` HTML with Next.js `__NEXT_DATA__` and JSON-LD | Recheck due/status; do not infer a developer API |
+| Rallit (later supplement) | Public `GET` HTML with Next.js list/detail state; separately documented partner API | Public access is not reuse permission; website object status differs from partner string status |
 | Work24 | XML list/detail API plus public HTML form/table | External API credentials are optional; public detail is the fallback |
 
-These status and header observations are a dated public GET baseline, not a guarantee about private calls or future implementation details.
+These status and header observations are a dated public GET baseline, not a guarantee about private calls or future implementation details. The Rallit supplement below was added after that baseline and does not backdate its observations to the filename's original date.
 
 ## Saramin
 
@@ -69,6 +70,17 @@ These status and header observations are a dated public GET baseline, not a guar
 - The public UI exposes position, career range/type, skills, location, service or business model, company size, and keyword axes. Refresh filter parameters and verify each detail page. No station filter or documented developer API is assumed.
 
 ## Official ATS and supplementary sources
+
+### Rallit supplement (2026-10-11/12)
+
+- Canonical details use `https://www.rallit.com/positions/<id>`. Ordinary public HTML inspection does not technically require the partner API.
+- List SSR data is at `props.pageProps.dehydratedState.queries[*].state.data.data`, with `items`, `totalCount`, `totalPage`, `pageNumber`, and `pageSize`.
+- Detail data is `props.pageProps.position`; website `status.code` is distinct from the documented partner API's string `status`. `isAlwaysHiring` never overrides explicit closure or an expired fixed deadline.
+- The website's `keyword`, `jobGroup`, `job`, `jobLevel`, and `addressRegion` parameters are UI/SSR observations, not a documented anonymous API contract. Do not call embedded internal endpoint names as a workaround.
+- Bulk copying/storage remains permission-deferred. Follow the canonical [Rallit reference](../../skills/job-research-match/references/rallit.md) for official documentation, terms, filters, evidence limits, and the access gate.
+- No user query values, actual posting contents, account targets, or successful authenticated API/browser actions are recorded in this supplement.
+
+### Other sources
 
 Official company/ATS pages are preferred when a stable canonical URL exposes complete duties, requirements, location, career, deadline, and status evidence. LinkedIn and Indeed are supplementary because login, locale, and redistribution conditions can limit public verification. Programmers, Incruit, RocketPunch, Remember, and Careerly remain deferred/manual unless their current public URL and field contracts are confirmed.
 

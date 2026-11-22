@@ -58,4 +58,5 @@ Before writing a collector:
 - Wanted: use direct posting evidence and a user-controlled browser when login is required.
 - Jumpit: prefer structured developer fields and direct posting pages.
 - Groupby: use public list/detail HTML and embedded Next.js data, preserve `/positions/<id>`, and refresh visible filter values at run time; do not infer a private API or station-search path.
+- Rallit: read `references/rallit.md`. Inspect public filters for source discovery, but defer bulk copying/storage until platform permission is established. The documented partner API is not an anonymous search API; do not substitute a website-internal query key for authorization.
 - Programmers Career: keep manual-only until current listing and URL behavior are verified.

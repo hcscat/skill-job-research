@@ -91,6 +91,15 @@
       "notes": "Verify canonical details and due/status evidence; no station filter or public developer API is assumed."
     },
     {
+      "site_key": "rallit",
+      "site_name": "Rallit",
+      "coverage": "deferred-permission-review",
+      "transport": ["html", "next-data", "official-partner-api"],
+      "canonical_url_pattern": "https://www.rallit.com/positions/<id>",
+      "field_keys": ["search_keywords", "role_scope", "career", "location", "skills", "company_tags", "joining_reward", "salary", "deadline", "status"],
+      "notes": "Supplement added after the original catalog: see the canonical rallit.md reference. Public HTML inspection does not require the partner API, but bulk copying/storage remains permission-deferred. Website and partner schemas differ. No native station path was observed. Concrete filter values remain private runtime input."
+    },
+    {
       "site_key": "work24",
       "site_name": "Work24",
       "coverage": "fallback",

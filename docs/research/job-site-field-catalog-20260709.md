@@ -34,6 +34,7 @@ The public catalog describes the shape of a value, not the value itself. Optiona
 | Jumpit | keyword, skill stack, role, career, location, tags, dates | Next.js/RSC serialized state |
 | CATCH | keyword, category, region, career, education, employment, status | SSR object and HTML detail |
 | Groupby | position, career type/range, skills, location, service model, company size | Next.js initial data and canonical detail |
+| Rallit (supplement, 2026-10-11/12) | keyword, job group/job, career buckets, broad region, skills, company tags, joining reward, sort | Public HTML/Next.js; separate authenticated partner API. Bulk collection remains permission-deferred |
 | Work24 | keyword, occupation, region, career, education, employment, wage | XML list/detail API and public HTML |
 | LinkedIn | keyword, location, posted date, employment, seniority, company | Public search plus login-sensitive detail |
 | Indeed | keyword, location, compensation, remote, job type, career | Public search/detail with locale differences |
@@ -81,3 +82,5 @@ Accepted values, code dictionaries, and connector-specific IDs are runtime obser
 - Pagination, cursor, feed, and result-count boundaries
 
 The dated transport review contains the public HTTP/HTML/SSR observations that support this field catalog: [platform-data-structures-20260813.md](platform-data-structures-20260813.md).
+
+The original filename/date is retained for traceability. For Rallit's later supplement, use the canonical [Rallit reference](../../skills/job-research-match/references/rallit.md) and [skill field catalog](../../skills/job-research-match/references/job-site-field-catalog.json). These references describe available fields, not enabled user filters or proof of an implemented bulk collector. Refresh transport/filter behavior before a run.
