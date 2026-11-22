@@ -40,7 +40,7 @@ class SkillContractTest(unittest.TestCase):
         self.assertIn("scripts/status_columns.py", text)
         self.assertTrue((SKILL / "scripts" / "status_transfer.py").exists())
         self.assertIn("scripts/status_transfer.py", text)
-        for helper in ("posting_status.py", "collection_settings.py"):
+        for helper in ("posting_status.py", "collection_settings.py", "spreadsheet_formatting.py"):
             self.assertTrue((SKILL / "scripts" / helper).exists())
             self.assertIn(f"scripts/{helper}", text)
 
