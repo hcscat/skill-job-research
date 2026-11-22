@@ -172,3 +172,11 @@ def test_forcibly_tracked_generated_directory_is_scanned(tmp_path):
     (folder / "sample.txt").write_text("sample" + "@" + "private.invalid")
     subprocess.run(["git","add","data/sample.txt"],cwd=tmp_path,check=True)
     assert any(label=="email address" for _,_,label in privacy_check.scan(tmp_path,all_files=True))
+
+@pytest.mark.parametrize('name', ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'state.sqlite3-journal', 'state.db-wal', 'run.log', 'storage-state.json', 'key.pem'])
+def test_shared_ignore_rules_cover_database_sidecars_and_credentials(name):
+    root = Path(__file__).resolve().parents[1]
+    if not (root / '.git').exists() or shutil.which('git') is None:
+        pytest.skip('requires a Git checkout')
+    probe = subprocess.run(['git', 'check-ignore', '--no-index', '-q', f'tests/{name}'], cwd=root)
+    assert probe.returncode == 0

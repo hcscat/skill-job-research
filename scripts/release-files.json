@@ -19,6 +19,7 @@
     "docs/research/platform-data-structures-20260813.md",
     "docs/security-and-local-state.ko.md",
     "docs/security-and-local-state.md",
+    "docs/specs/clone-ignore-safety-net/spec.md",
     "docs/specs/local-only-instruction-files/spec.md",
     "pyproject.toml",
     "scripts/build_release.py",
