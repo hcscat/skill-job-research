@@ -1,0 +1,30 @@
+# Identifier and home-path patterns
+
+## Purpose
+
+The publication scanner (`scripts/privacy_check.py`) and the private state validator (`local_state.py`) must reject Korean mobile numbers, resident identifiers and user-home paths wherever they appear in prose, while not flagging hex digests, UUIDs, URL path segments or regex source.
+
+## Rules
+
+- Phone: `01[016789]` or `+82` mobile prefixes followed by 3–4 and 4 digits, with optional `-`, `.` or space separators. Resident identifier: 6 digits, optional `-` or space, then `[1-4]` and 6 digits.
+- Both digit patterns use digit-only boundaries. Before they run, recognized UUIDs (`8-4-4-4-12` hex) and hex tokens of 16 or more characters containing a letter are masked. An ordinary word, label or extension next to an identifier does not exempt it.
+- Home paths: `/Users/<name>`, `/home/<name>` and `C:\Users\<name>` at any sentence position, including inside quotes, table pipes or after a label colon such as `Location:`. An ASCII letter, digit, `_`, `/`, `\`, `.` or `-` right before the prefix exempts it, so relative source paths and API routes containing a `home` or `Users` segment are not home paths. Attached non-ASCII prose does not exempt it. A home path still counts after a non-web `scheme://authority` (such as `file:`, `ssh:`, `sftp:`, editor or loopback URLs) or a glued short option after whitespace, a quote, a backtick or one of `= ( , ; { [` (a single-letter `-X` such as `-I`, `-F` or `-C`, an `-i…` include option such as `-isystem`, or MSVC `/X` or `/FX` before a drive path), and a POSIX home path also counts after a known local root (`/mnt/<drive>`, `/cygdrive/<drive>`, `/<drive>` before `/Users/`, `/System/Volumes/Data`, `/host_mnt`), alone or after either of those contexts. A route such as `/m/home/x` stays exempt. A relative import such as `../home/x` stays exempt. Regex source (an alternation of home prefixes) is not a path.
+- Web URL spans are masked before the home-path check: `http://` or `https://` to a host other than a loopback or local-bind address (`localhost`, `*.localhost`, `127.*`, `0.0.0.0`, `[::]`, `[::1]`), or a standalone `www.` host, through host and path characters and the fragment. A path segment inside such a URL is not a home path. The span stops at a query, a `key=value` fragment, a Windows drive path and delimiters such as `,`, `;` and `)`, so a home path there or in the next field is still reported. `file:`, `ssh:`, editor and loopback URLs and scp-style `host:` paths are never masked.
+- In a Git checkout, `--all-files` scans tracked and non-ignored files; an ignore rule never hides a tracked file.
+
+## Test cases
+
+| ID | Scenario | Setup and input | Expected result | Check |
+|---|---|---|---|---|
+| TC-01 | Contact and resident patterns | Synthetic phone and resident values, alone and next to Korean text, `tel:` or parentheses | Reported | `tests/test_hardening.py::test_public_scanner_rejects_contact_and_resident_patterns`, `test_public_scanner_still_flags_identifiers_next_to_text` |
+| TC-02 | Words or extensions next to identifiers | `Call <phone>x123`, `RRN<resident>`, `id ab<phone>` | Reported by the scanner and rejected by the state validator | `tests/test_hardening.py::test_public_scanner_still_flags_identifiers_next_to_text`, `tests/test_local_state.py::test_state_validator_still_rejects_identifiers_next_to_text` |
+| TC-03 | Digests and UUIDs | SHA-256, 40-character commit ID and UUID containing phone-shaped digit runs | Not reported | `tests/test_hardening.py::test_public_scanner_ignores_digit_runs_inside_hex_digests`, `tests/test_local_state.py::test_state_validator_ignores_digit_runs_inside_hex_digests` |
+| TC-04 | Generic numbers | Build numbers and scores | Not reported | `tests/test_hardening.py::test_public_scanner_keeps_generic_numbers` |
+| TC-05 | Home paths in prose | Bare, nested, quoted, pipe-adjacent and Windows home paths | Reported by the scanner; rejected by the state validator | `tests/test_hardening.py::test_public_scanner_rejects_bare_and_nested_home_paths`, `tests/test_local_state.py::test_sensitive_paths_are_rejected_in_any_sentence_position`, `test_home_without_subdirectory_is_still_sensitive` |
+| TC-06 | URL segments, routes and regex source | `https://example.com/Users/...` with a port, parent segment, IPv6 host, non-ASCII or colon-ending segment, hash route, `www.` host, Markdown parentheses or attached Korean text; relative source paths, relative imports and API routes (including single-letter first segments) containing a `home` or `Users` segment; home-prefix alternations | Not reported | `tests/test_hardening.py::test_public_scanner_ignores_url_segments_and_regex_source`, `tests/test_local_state.py::test_url_paths_are_not_local_user_directories` |
+| TC-07 | Checkout scan scope | Temporary repository with an ignored and a non-ignored folder, then the ignored file force-tracked | Non-ignored and tracked files are scanned; the untracked ignored file is not | `tests/test_hardening.py::test_checkout_scan_covers_unignored_files_but_not_an_ignored_local_area` |
+| TC-08 | Labels, file URLs and local prefixes | `Location:` before POSIX and Windows home paths, `file:` URLs with forward and back slashes, a forward-slash drive path, an extended-length Windows path, an scp-style `host:` path, known local roots alone or inside a `file:` or remote-editor URL or a flag, glued compiler and archiver options, including inside backticks or after `;`, a Windows drive path right after a URL, `ssh://`, `sftp://`, editor, loopback and local-bind URLs, scp-style `www.` hosts, a web URL query value or `key=value` fragment, the CSV field after a URL and Korean text attached to the path | Reported by the scanner; rejected by the state validator | `tests/test_hardening.py::test_public_scanner_rejects_home_paths_in_any_local_context`, `tests/test_local_state.py::test_home_paths_in_any_local_context_are_sensitive` |
+
+## Unchanged on failure
+
+Both checks only report or raise; they never rewrite, redact or delete content. Pattern checks are not proof that every sensitive fact is absent.

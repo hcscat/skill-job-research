@@ -19,6 +19,46 @@ local_state = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(local_state)
 
 
+@pytest.mark.parametrize('value', [
+    '/' + 'Users/sample/private/file',
+    'See ' + '/' + 'Users/demo/private/file',
+    'C:' + '\\Users\\sample\\private\\file',
+    '/' + 'home/sample/private/file',
+])
+def test_sensitive_paths_are_rejected_in_any_sentence_position(value):
+    with pytest.raises(ValueError, match='unsafe'):
+        local_state._require_safe_state({'note':value})
+
+
+@pytest.mark.parametrize('prefix',['/'+'Users/','/'+'home/','C:'+'\\Users\\'])
+@pytest.mark.parametrize('suffix',[' ',"'",'"',''])
+def test_home_without_subdirectory_is_still_sensitive(prefix,suffix):
+    with pytest.raises(ValueError,match='unsafe'):
+        local_state._require_safe_state({'note':'See '+prefix+'sample'+suffix})
+
+
+@pytest.mark.parametrize('value',['Location:'+'/'+'Users/sample/private/report.txt','Location:'+'C:'+'\\Users\\sample\\private\\report.txt',
+                                  'file://'+'/'+'Users/sample/report.txt','file:///C:'+'/'+'Users/sample/report.txt','경로'+'/'+'home/sample/report.txt',
+                                  '/mnt/c'+'/'+'Users/sample/x','https://example.com/jobs?path='+'/'+'Users/sample/x','vscode://file'+'/'+'Users/sample/project',
+                                  'Backend,https://jobs.example/p/1,'+'/'+'Users/sample/cv.pdf','http://localhost:8000'+'/'+'home/sample/app/x',
+                                  'http://0.0.0.0:8000'+'/'+'Users/sample/x','Open https://jobs.example/p/1#'+'C:'+'\\Users\\sample\\cv.pdf',
+                                  'file:///mnt/c'+'/'+'Users/sample/x','clang -F'+'/'+'Users/sample/x','`-L'+'/'+'home/sample/lib`'])
+def test_home_paths_in_any_local_context_are_sensitive(value):
+    with pytest.raises(ValueError,match='unsafe'):
+        local_state._require_safe_state({'note':value})
+
+
+@pytest.mark.parametrize('path',['/'+'Users/sample/jobs','/'+'home/sample/jobs'])
+@pytest.mark.parametrize('host',['https://example.com','https://[2001:db8::1]','https://example.com/채용','https://example.com/a:','공고https://example.com'])
+def test_url_paths_are_not_local_user_directories(host,path):
+    local_state._require_safe_state({'url':host+path})
+
+
+@pytest.mark.parametrize('value',['see src/views'+'/'+'home/components/Hero.vue','<td>docs'+'/'+'home/sample</td>','GET /api/v2'+'/'+'Users/123/roles','see ..'+'/'+'home/README.md','/v'+'/'+'home/index'])
+def test_relative_routes_are_not_local_user_directories(value):
+    local_state._require_safe_state({'note':value})
+
+
 class LocalStateTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
