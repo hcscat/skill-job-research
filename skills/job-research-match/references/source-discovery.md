@@ -91,15 +91,9 @@ Exclude or downgrade a source when it has unclear permissions, login-only conten
 
 ## Profile-driven source selection
 
-Do not ship a role, skill, industry, location, career, salary, or exclusion
-example as a source default. When a profile contains a particular technology or
-business domain, map its `search_keywords` and role scope to the fields exposed by
-each selected source. The same source notes apply regardless of the technology;
-the current profile decides the terms.
+Do not ship a role, skill, industry, location, career, salary, or exclusion example as a source default. When a profile contains a particular technology or business domain, map its `search_keywords` and role scope to the fields exposed by each selected source. The same source notes apply regardless of the technology; the current profile decides the terms.
 
-For status-sensitive sources, verify each detail page's posting-scoped status and
-apply control. An open-ended deadline is not evidence that a posting is active;
-ambiguous pages remain `unknown`.
+For status-sensitive sources, verify each detail page's posting-scoped status and apply control. An open-ended deadline is not evidence that a posting is active; ambiguous pages remain `unknown`.
 
 ## Known Source Profiles
 
@@ -109,8 +103,7 @@ The portable skill catalog is stored at:
 
 - `references/job-site-field-catalog.json`
 
-The source repository also keeps the dated research artifacts at (English files
-are primary; Korean files are ancillary translations):
+The source repository also keeps the dated research artifacts at (English files are primary; Korean files are ancillary translations):
 
 - `docs/research/job-site-field-catalog-20260709.json`
 - `docs/research/job-site-field-catalog-20260709.md`

@@ -6,28 +6,15 @@ The repository contains only reusable skill logic, generic examples, tests, and 
 
 The skill stores user state outside the repository. Set `JOB_RESEARCH_MATCH_HOME` when a different private location is required. Keep the state directory owner-only and back it up only to an encrypted destination.
 
-The shared `.gitignore` does not enumerate personal document filenames. Before
-authorized sensitive documents or private outputs enter a checkout, the agent
-must add applicable non-identifying ignore rules and verify both ignore and Git
-tracking state. Existing tracked content requires a separately authorized remedy;
-an ignore rule alone does not remove it. See the skill's
-[runtime document Git protection](skills/job-research-match/references/local-state-security.md#runtime-document-git-protection).
+The shared `.gitignore` does not enumerate personal document filenames. Before authorized sensitive documents or private outputs enter a checkout, the agent must add applicable non-identifying ignore rules and verify both ignore and Git tracking state. Existing tracked content requires a separately authorized remedy; an ignore rule alone does not remove it. See the skill's [runtime document Git protection](skills/job-research-match/references/local-state-security.md#runtime-document-git-protection).
 
 ## Local instructions and cross-device privacy
 
-Keep AI agent instruction files local at every depth: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, their override, local and `.KO.md` variants, and the `.agents/`, `.agent/`, `_agents/`, `_agent/`, `.claude/`, `.codex/` and `.gemini/` folders. Shared project ignore rules list these names without slashes so clones inherit the protection. Git ignore rules do not protect already tracked files; inspect
-staged files, outgoing commits, and actual package contents before publication.
-General permission to commit, push, or publish does not authorize these files.
-Preserve local contents and report tracked-file conflicts; do not automatically
-delete files or rewrite history.
+Keep AI agent instruction files local at every depth: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, their override, local and `.KO.md` variants, and the `.agents/`, `.agent/`, `_agents/`, `_agent/`, `.claude/`, `.codex/` and `.gemini/` folders. Shared project ignore rules list these names without slashes so clones inherit the protection. Git ignore rules do not protect already tracked files; inspect staged files, outgoing commits, and actual package contents before publication. General permission to commit, push, or publish does not authorize these files. Preserve local contents and report tracked-file conflicts; do not automatically delete files or rewrite history.
 
 A root guide was published before this policy and remains in Git history. `HISTORICAL_PUBLISHED_GUIDE_SHA256` in `scripts/privacy_check.py` records only that exact copy so history scans pass without a rewrite; working-tree, staged and release scans reject every instruction file regardless of digest. Check the staged diff and outgoing commits separately: a successful content scan does not establish authorization. Skill release bundles and installations exclude all instruction files.
 
-Share reusable logic and sanitized templates, not filled-in settings, private
-prompts, credentials, workspace mappings, logs, databases, backups, or run reports.
-On another device, merge the sanitized policy into the tool's supported global
-instruction file. A clone does not transfer global AI instructions, and another
-device must not be described as configured without verification.
+Share reusable logic and sanitized templates, not filled-in settings, private prompts, credentials, workspace mappings, logs, databases, backups, or run reports. On another device, merge the sanitized policy into the tool's supported global instruction file. A clone does not transfer global AI instructions, and another device must not be described as configured without verification.
 
 ## Authentication
 
@@ -42,16 +29,9 @@ The skill may inspect and rank job postings. It must not submit applications, up
 
 ## Public Release Gate
 
-Scan exact staged blobs with `scripts/privacy_check.py --staged` as well as the
-working tree and reachable history. A sanitized working file does not sanitize
-its staged version. Binary, oversized, or non-UTF-8 content blocks publication
-until separately reviewed; it must not be silently called clean. A pattern scan
-is not proof that every possible personal search preference has been removed.
+Scan exact staged blobs with `scripts/privacy_check.py --staged` as well as the working tree and reachable history. A sanitized working file does not sanitize its staged version. Binary, oversized, or non-UTF-8 content blocks publication until separately reviewed; it must not be silently called clean. A pattern scan is not proof that every possible personal search preference has been removed.
 
-The release manifest lists individual files only. Adding a source file requires
-an explicit reviewed manifest update; ignored and untracked files are never
-included merely because they appear under a source tree. Installers use the same
-allow-list for skill files, reject symlink paths, and retain a rollback backup.
+The release manifest lists individual files only. Adding a source file requires an explicit reviewed manifest update; ignored and untracked files are never included merely because they appear under a source tree. Installers use the same allow-list for skill files, reject symlink paths, and retain a rollback backup.
 
 Run the privacy scanner and tests before publishing:
 
@@ -62,10 +42,6 @@ Run the privacy scanner and tests before publishing:
 
 If personal information was committed previously, deleting it in a later commit does not remove it from Git history. Make the repository private, rotate exposed credentials, and prepare a clean history or a new repository before public release.
 
-After a history rewrite, verify every branch and tag and publish only the clean
-root. A hosting service may still serve an unreachable old object by its hash for
-some time; an ordinary push cannot guarantee that object is purged. Use the
-hosting service's sensitive-data removal/support procedure when hash-based access
-continues.
+After a history rewrite, verify every branch and tag and publish only the clean root. A hosting service may still serve an unreachable old object by its hash for some time; an ordinary push cannot guarantee that object is purged. Use the hosting service's sensitive-data removal/support procedure when hash-based access continues.
 
 Use `./scripts/build_release.py` to create an allow-listed, privacy-checked source tree and deterministic ZIP without `.git`, local state, reports, or crawler data. Treat that clean directory as the preferred input for a new public repository.

@@ -1,19 +1,12 @@
 # Job-site field catalog (2026-07-09)
 
-This English document is the primary version. The Korean file with the `.ko.md`
-suffix is an ancillary translation.
+This English document is the primary version. The Korean file with the `.ko.md` suffix is an ancillary translation.
 
 ## Privacy boundary
 
-This is a reusable public catalog of field names, data types, transport shapes,
-and verification rules. It deliberately contains no candidate-specific search
-keywords, role priorities, locations, station lists, career or salary limits,
-exclusion terms, connector targets, or account data. A current authorized profile
-or a live configured spreadsheet supplies those values at execution time.
+This is a reusable public catalog of field names, data types, transport shapes, and verification rules. It deliberately contains no candidate-specific search keywords, role priorities, locations, station lists, career or salary limits, exclusion terms, connector targets, or account data. A current authorized profile or a live configured spreadsheet supplies those values at execution time.
 
-Runtime profiles and raw evidence belong in the private state directory. If a
-repository-local execution area is explicitly needed, use the ignored
-`workspace/job-collection/` area and never include it in a release.
+Runtime profiles and raw evidence belong in the private state directory. If a repository-local execution area is explicitly needed, use the ignored `workspace/job-collection/` area and never include it in a release.
 
 ## Common field contract
 
@@ -29,8 +22,7 @@ repository-local execution area is explicitly needed, use the ignored
 | Active status | Explicit status, apply control, close code, or unknown | Detail-page evidence |
 | Score/recommendation | Explainable score and manual review state | Matching policy and user decision |
 
-The public catalog describes the shape of a value, not the value itself. Optional
-user-only exclusion terms and other private constraints are not represented here.
+The public catalog describes the shape of a value, not the value itself. Optional user-only exclusion terms and other private constraints are not represented here.
 
 ## Platform field matrix
 
@@ -68,26 +60,17 @@ Each source profile may describe a field using this shape:
 }
 ```
 
-Accepted values, code dictionaries, and connector-specific IDs are runtime
-observations. They should be stored only in a redacted run summary when needed,
-never as a candidate profile or a repository default.
+Accepted values, code dictionaries, and connector-specific IDs are runtime observations. They should be stored only in a redacted run summary when needed, never as a candidate profile or a repository default.
 
 ## Collection and verification rules
 
 1. Read the current authorized profile or live sheet immediately before a run.
-2. Map its terms to each source's available fields; omitted constraints remain
-   omitted rather than being invented.
-3. If both region and station paths are requested, record separate `query_path`
-   values and deduplicate only after detail verification.
-4. Inspect company, title, duties, requirements, career, location, employment,
-   dates, deadline, and active status on the canonical detail page when visible.
-5. Keep `unknown` status with evidence and verification time when a source does
-   not expose a reliable close signal; never infer that an open-ended deadline is
-   active.
-6. Preserve source distinctions. The primary key is source plus posting ID, with
-   canonical URL as the fallback.
-7. Do not store cookies, authorization headers, API keys, contact details, or
-   authenticated page bodies.
+2. Map its terms to each source's available fields; omitted constraints remain omitted rather than being invented.
+3. If both region and station paths are requested, record separate `query_path` values and deduplicate only after detail verification.
+4. Inspect company, title, duties, requirements, career, location, employment, dates, deadline, and active status on the canonical detail page when visible.
+5. Keep `unknown` status with evidence and verification time when a source does not expose a reliable close signal; never infer that an open-ended deadline is active.
+6. Preserve source distinctions. The primary key is source plus posting ID, with canonical URL as the fallback.
+7. Do not store cookies, authorization headers, API keys, contact details, or authenticated page bodies.
 
 ## Revalidation checklist
 
@@ -97,5 +80,4 @@ never as a candidate profile or a repository default.
 - Stale detail pages and apply-control visibility
 - Pagination, cursor, feed, and result-count boundaries
 
-The dated transport review contains the public HTTP/HTML/SSR observations that
-support this field catalog: [platform-data-structures-20260813.md](platform-data-structures-20260813.md).
+The dated transport review contains the public HTTP/HTML/SSR observations that support this field catalog: [platform-data-structures-20260813.md](platform-data-structures-20260813.md).
