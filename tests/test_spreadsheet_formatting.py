@@ -56,3 +56,35 @@ def test_empty_table_removes_stale_rules_without_coloring_empty_grid():
 def test_invalid_policies_fail_before_writes(change):
     with pytest.raises(ValueError):
         plan_rank_shading(17, HEADERS, 20, [], dict(POLICY, **change))
+
+
+def deleted(requests):
+    return [r["deleteConditionalFormatRule"]["index"] for r in requests if "deleteConditionalFormatRule" in r]
+
+
+@pytest.mark.parametrize("replace", [None, False, True])
+def test_generated_formula_with_text_formatting_is_preserved(replace):
+    policy = {k: v for k, v in POLICY.items() if k != "replace_scoped_background_rules"}
+    if replace is not None:
+        policy["replace_scoped_background_rules"] = replace
+    milestone, even = added(plan_rank_shading(17, HEADERS, 12, [], policy))
+    bold = deepcopy(milestone)
+    bold["booleanRule"]["format"] = {"textFormat": {"bold": True}}
+    requests = plan_rank_shading(17, HEADERS, 12, [bold, even], policy)
+    assert deleted(requests) == [1]
+    assert [r["addConditionalFormatRule"]["index"] for r in requests if "addConditionalFormatRule" in r] == [1, 2]
+
+
+@pytest.mark.parametrize("replace", [None, False])
+def test_interval_change_replaces_previous_rank_band_rules_only(replace):
+    policy = {k: v for k, v in POLICY.items() if k != "replace_scoped_background_rules"}
+    if replace is not None:
+        policy["replace_scoped_background_rules"] = replace
+    previous = added(plan_rank_shading(17, HEADERS, 12, [], policy))
+    unrelated = deepcopy(previous[0])
+    unrelated["booleanRule"]["condition"]["values"][0]["userEnteredValue"] = "=A2=3"
+    requests = plan_rank_shading(17, HEADERS, 12, previous + [unrelated], dict(policy, milestone_interval=5))
+    assert deleted(requests) == [1, 0]
+    rules = added(requests)
+    assert rules[0]["booleanRule"]["condition"]["values"][0]["userEnteredValue"].endswith("MOD($A2,5)=0)")
+    assert [r["addConditionalFormatRule"]["index"] for r in requests if "addConditionalFormatRule" in r] == [1, 2]

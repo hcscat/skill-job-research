@@ -43,6 +43,11 @@ def plan_rank_shading(sheet_id, headers, last_row, existing_rules, policy):
         f"=AND(ISNUMBER({anchor}),{anchor}>0,MOD({anchor},{interval})=0)",
         f"=AND(ISNUMBER({anchor}),{anchor}>0,MOD({anchor},2)=0,MOD({anchor},{interval})<>0)",
     ]
+    # A rule this helper generated for any earlier interval, so an interval change
+    # replaces the previous pair instead of stacking a new one after it.
+    a = re.escape(anchor)
+    generated = re.compile(
+        rf"=AND\(ISNUMBER\({a}\),{a}>0,(?:MOD\({a},\d+\)=0|MOD\({a},2\)=0,MOD\({a},\d+\)<>0)\)")
     delete = []
     for index, rule in enumerate(existing_rules):
         ranges = rule.get("ranges", [])
@@ -55,7 +60,10 @@ def plan_rank_shading(sheet_id, headers, last_row, existing_rules, policy):
         fmt = boolean.get("format", {})
         background_only = bool(fmt) and set(fmt) <= {"backgroundColor", "backgroundColorStyle"}
         formula = (boolean.get("condition", {}).get("values") or [{}])[0].get("userEnteredValue")
-        if scoped and (formula in formulas or (policy.get("replace_scoped_background_rules") and background_only)):
+        # Ownership needs the generated background-only shape; a rule that also
+        # carries text or other formatting belongs to the user and is kept.
+        owned = isinstance(formula, str) and bool(generated.fullmatch(formula))
+        if scoped and background_only and (owned or policy.get("replace_scoped_background_rules")):
             delete.append(index)
     requests = [{"deleteConditionalFormatRule": {"sheetId": sheet_id, "index": i}}
                 for i in reversed(delete)]
