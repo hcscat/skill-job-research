@@ -10,6 +10,7 @@ This English document is the primary version. The `.ko.md` file is an ancillary 
 - Treat discipline- or technology-specific years as evidence notes unless the profile explicitly makes them an automatic gate.
 - Run separate region and station paths only when the selected source supports both and the profile requests both. Merge same-source IDs/URLs after detail verification.
 - Check active status and deadline independently of the score.
+- A supplied `allowed_role_priorities` limits eligible priority groups; role priority otherwise controls ordering, not eligibility.
 
 ## 2. Conditions applied before scoring
 
@@ -41,7 +42,9 @@ Fields that are not supplied are removed from the denominator. Discipline-specif
 
 ## 5. Penalties and evidence
 
-- Apply configured exclusion-term penalties only when those terms are supplied by the current profile; do not invent a universal exclusion list.
+- `excluded_keywords` are hard exclusions; profile-supplied `avoid_keywords` are subtractive penalties (10 per match, capped at 30), not interchangeable. No concrete keyword list belongs in a public template.
+- A total-career shortfall greater than two years adds a 10-point penalty when penalties are enabled. Optional `required_qualification_penalties` require separately verified mandatory criteria, with a profile-controlled cap.
+- `penalties_enabled=false` disables subtractive penalties but preserves match weights, hard exclusions, and status/evidence caps. Never restore removed personal rules from a historical run.
 - Record company, title, duties, requirements, career, education, location, employment type, compensation, deadline, and status. Missing values remain `unknown` or `not disclosed`.
 - Record observable API, HTML, SSR/Next.js, RSC, JSON-LD, or XML transport in `transport_evidence`. Never store cookies, authorization headers, access keys, contact fields, or authenticated page bodies.
 
@@ -51,6 +54,8 @@ Fields that are not supplied are removed from the denominator. Discipline-specif
 2. canonical URL
 
 Use that order for duplicate checks. Preserve the same company and title as separate rows when the source platform differs. Merge only the same platform's region/station results after detail verification.
+
+If the profile requests `ranking.group_by=company`, keep the combined existing-plus-new company's rows adjacent across platforms. Order company groups by their highest score, then members by score with deterministic tie-breaks. This changes display order only, not scores or IDs. Preserve user fields, formulas, notes, and links; do not fuzzy-merge similar companies. A policy edit alone does not authorize rescoring or deleting existing rows.
 
 ## 7. Preference memory
 
