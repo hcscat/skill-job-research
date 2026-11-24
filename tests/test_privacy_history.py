@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import hashlib
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -26,16 +27,29 @@ class PrivacyHistoryTest(unittest.TestCase):
         self.addCleanup(approval.stop)
         return content
 
-    def _repo(self, email: str, filename: str = "README.md") -> Path:
+    def _repo(
+        self,
+        email: str,
+        filename: str = "README.md",
+        *,
+        author_name: str = "Release Bot",
+        committer_name: str | None = None,
+        committer_email: str | None = None,
+    ) -> Path:
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
         root = Path(temp.name)
         subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-        subprocess.run(["git", "config", "user.name", "Release Bot"], cwd=root, check=True)
+        subprocess.run(["git", "config", "user.name", author_name], cwd=root, check=True)
         subprocess.run(["git", "config", "user.email", email], cwd=root, check=True)
         (root / filename).write_text("shareable content\n", encoding="utf-8")
         subprocess.run(["git", "add", filename], cwd=root, check=True)
-        subprocess.run(["git", "commit", "-qm", "initial"], cwd=root, check=True)
+        env = os.environ.copy()
+        if committer_name is not None:
+            env["GIT_COMMITTER_NAME"] = committer_name
+        if committer_email is not None:
+            env["GIT_COMMITTER_EMAIL"] = committer_email
+        subprocess.run(["git", "commit", "-qm", "initial"], cwd=root, check=True, env=env)
         return root
 
     def test_clean_noreply_history_passes(self) -> None:
@@ -107,6 +121,62 @@ class PrivacyHistoryTest(unittest.TestCase):
                           frozenset({hashlib.sha256(content).hexdigest()})):
             self.assertTrue(any(item[2] == "email address" for item in privacy_check.scan(root)))
             self.assertTrue(any(item[2] == "email address" for item in privacy_check.scan_git_history(root)))
+
+    def test_github_web_merge_noreply_committer_passes(self) -> None:
+        merge_noreply = "noreply" + "@" + "github.com"
+        root = self._repo(
+            "12345+example-handle@users.noreply.github.com",
+            author_name="example-handle",
+            committer_name="GitHub",
+            committer_email=merge_noreply,
+        )
+
+        self.assertEqual(privacy_check.scan_git_history(root), [])
+
+    def test_github_web_merge_noreply_committer_is_case_insensitive(self) -> None:
+        mixed_case_noreply = "NoReply" + "@" + "GitHub.com"
+        root = self._repo(
+            "12345+example-handle@users.noreply.github.com",
+            author_name="example-handle",
+            committer_name="GitHub",
+            committer_email=mixed_case_noreply,
+        )
+
+        self.assertEqual(privacy_check.scan_git_history(root), [])
+
+    def test_other_github_domain_commit_email_is_rejected(self) -> None:
+        other_github_email = "someone" + "@" + "github.com"
+        committer_repo = self._repo(
+            "12345+example-handle@users.noreply.github.com",
+            author_name="example-handle",
+            committer_name="GitHub",
+            committer_email=other_github_email,
+        )
+        committer_findings = privacy_check.scan_git_history(committer_repo)
+        self.assertTrue(any(item[2] == "non-noreply commit email metadata" for item in committer_findings))
+        self.assertNotIn(other_github_email, repr(committer_findings))
+
+        author_repo = self._repo(other_github_email, author_name="Release Bot")
+        author_findings = privacy_check.scan_git_history(author_repo)
+        self.assertTrue(any(item[2] == "non-noreply commit email metadata" for item in author_findings))
+        self.assertNotIn(other_github_email, repr(author_findings))
+
+    def test_non_generic_name_with_github_merge_noreply_is_rejected(self) -> None:
+        merge_noreply = "noreply" + "@" + "github.com"
+        root = self._repo(
+            "12345+example-handle@users.noreply.github.com",
+            author_name="example-handle",
+            committer_name="Real Person",
+            committer_email=merge_noreply,
+        )
+
+        findings = privacy_check.scan_git_history(root)
+        self.assertEqual([item[2] for item in findings], ["non-generic commit name metadata"])
+
+    def test_file_content_scan_still_rejects_github_noreply_and_domain_emails(self) -> None:
+        for email in ("noreply" + "@" + "github.com", "someone" + "@" + "github.com"):
+            findings = privacy_check.scan_blob("note.md", f"Contact: {email}\n".encode("utf-8"))
+            self.assertTrue(any(item[2] == "email address" for item in findings), email)
 
 
 if __name__ == "__main__":
