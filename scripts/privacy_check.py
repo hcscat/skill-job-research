@@ -62,6 +62,8 @@ URL_SPAN = re.compile(
 )
 HOME_PATH_LABEL = "absolute user home path"
 ALLOWED_EMAIL_DOMAINS = {"example.com", "users.noreply.github.com"}
+# Exact GitHub web-merge committer address; commit metadata only, not file content.
+ALLOWED_COMMIT_EMAILS = {"noreply" + "@" + "github.com"}
 ALLOWED_COMMIT_NAMES = {"release bot", "github", "github actions", "dependabot[bot]"}
 GITHUB_HANDLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,38}$")
 SENSITIVE_NAME_PARTS = ("resume", "curriculum-vitae", "이력서", "경력기술서", "storage-state", "credentials")
@@ -215,8 +217,9 @@ def scan_git_history(root: Path) -> list[tuple[str, int, str]]:
         for email in metadata[1::2]:
             if "@" not in email:
                 continue
-            domain = email.rsplit("@", 1)[-1].casefold()
-            if domain not in ALLOWED_EMAIL_DOMAINS:
+            normalized_email = email.strip().casefold()
+            domain = normalized_email.rsplit("@", 1)[-1]
+            if normalized_email not in ALLOWED_COMMIT_EMAILS and domain not in ALLOWED_EMAIL_DOMAINS:
                 findings.add((commit[:12], 0, "non-noreply commit email metadata"))
 
         tree = _git(root, "ls-tree", "-r", "--name-only", commit).stdout.decode(
